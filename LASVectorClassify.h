@@ -7,6 +7,7 @@
 #include "LASSimpleClassify.h"
 #include "LASPoint.h"
 
+
 class LASVectorClassify : public LASSimpleClassify
 {
 public:
@@ -38,7 +39,7 @@ public:
 	* @param pathOutLas
 	* @return
 	*/
-	virtual void LASClassifyByVector(const char* pathLas, vector<string> pShpData, const char* pathOutLas)=0;
+	virtual void LASClassifyByVector(const char* pathLas, map<string,string> pShpPath, const char* pathOutLas)=0;
 
 
 	bool TestGeos();
@@ -68,7 +69,7 @@ public:
 	* @param pathOutLas
 	* @return
 	*/
-	void LASClassifyByVector(const char* pathLas, vector<string> pShpPath, const char* pathOutLas);
+	void LASClassifyByVector(const char* pathLas, map<string,string> pShpPath, const char* pathOutLas);
 
 };
 

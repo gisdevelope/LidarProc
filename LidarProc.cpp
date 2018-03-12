@@ -1,15 +1,13 @@
 // LidarProc.cpp: 定义控制台应用程序的入口点。
 //
 
-#include "LASReader.h"
-#include "LASPoint.h"
+#include "LASVectorClassify.h"
 
 int main()
 {
-	LidarPatchReader patchReader;
-	char* pathLas="/home/wuwei/Data/LAS/2477.00-184.75.las";
-	char* pathDir="/home/wuwei/Data/LAS/vegterian";
-	patchReader.LidarReader_SplitPatch(pathLas,pathDir,1);
+	LASShpClassify shpClassify;
+	char* pathLas = "/home/wuwei/Data/LAS/2477.00-184.75.las";
+	char* pathLasClassify = "/home/wuwei/Data/LAS/2477.00-185.00_GRASSLAND.las";
 
 	return 0;
 }

@@ -75,7 +75,7 @@ bool LASVectorClassify::TestGeos() {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pShpPath, const char* pathOutLas)
+void LASShpClassify::LASClassifyByVector(const char* pathLas, map<string,string> pShpPath, const char* pathOutLas)
 {
 	//???LAS
 	//ILASDataset *datasetLas = new ILASDataset();
@@ -91,6 +91,7 @@ void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pSh
 	patchReaderLine.LidarReader_ReadHeader(fLasIn, headerLas);
 	patchReaderLine.LidarReader_WriteHeader(fLasOut, headerLas);
 
+	int pointReserved = headerLas.number_of_point_records;
 	const int readPatch = 100000;
 	LASPoint* lasPnt = nullptr;
 	try
@@ -107,11 +108,17 @@ void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pSh
 
 	int realReadPoints = 0;
 	while (!feof(fLasIn)) {
-		Rect2D rect=patchReaderLine.LidarReader_ReadPatch(fLasIn, headerLas, lasPnt, realReadPoints);
-		for (size_t i = 0; i < pShpPath.size(); ++i)
-		{
-			GDALDataset *pShpData = (GDALDataset*)GDALOpenEx(pShpPath[i].c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL);
+		if(pointReserved<readPatch)
+			realReadPoints = pointReserved;
+		else
+			realReadPoints = readPatch;
 
+		Rect2D rect=patchReaderLine.LidarReader_ReadPatch(fLasIn, headerLas, lasPnt, realReadPoints);
+		for(auto iterShp : pShpPath){
+			string path = iterShp.first;
+			string type = iterShp.second;
+
+			GDALDataset *pShpData = (GDALDataset*)GDALOpenEx(path.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL);
 			if (pShpData == NULL)
 			{
 				printf("SHP File Open Failed!\n");
@@ -130,16 +137,6 @@ void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pSh
 				while ((pFeature = pLayer->GetNextFeature()) != NULL)
 				{
 					OGRFeatureDefn *poFDefn = pLayer->GetLayerDefn();
-					string typeName;
-					int iField;
-					for (iField = 0; iField < poFDefn->GetFieldCount(); iField++)
-					{
-						if (poFDefn->GetFieldDefn(iField)->GetNameRef() == "????????") {
-							typeName=pFeature->GetFieldAsString(iField);
-							break;
-						}
-					}
-
 					OGRGeometry *poGeometry;
 					poGeometry = pFeature->GetGeometryRef();
 					OGRwkbGeometryType geoWkbType = poGeometry->getGeometryType();
@@ -150,7 +147,7 @@ void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pSh
 							OGRPoint *pnt = new OGRPoint(lasPnt[k].m_vec3d.x, lasPnt[k].m_vec3d.y);
 							if (polygon->IsPointOnSurface(pnt))
 							{
-								std::map<std::string, int>::iterator it = name_type_maps.find(typeName);
+								std::map<std::string, int>::iterator it = name_type_maps.find(type);
 								if (it != name_type_maps.end())
 									lasPnt[k].m_classify = it->second;
 								else
@@ -178,7 +175,7 @@ void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pSh
 								OGRPoint *pnt = new OGRPoint(lasPnt[k].m_vec3d.x, lasPnt[k].m_vec3d.y);
 								if (poMultiLinearRing->isPointInRing(pnt))
 								{
-									std::map<std::string, int>::iterator it = name_type_maps.find(typeName);
+									std::map<std::string, int>::iterator it = name_type_maps.find(type);
 									if (it != name_type_maps.end())
 										lasPnt[k].m_classify = it->second;
 									else
@@ -187,14 +184,16 @@ void LASShpClassify::LASClassifyByVector(const char* pathLas, vector<string> pSh
 							}
 						}
 					}
-					else 
+					else
 					{
 						printf("not supportted polygon type\n");
 					}
 				}
 			}
+
 		}
 		patchReaderLine.LidarReader_WritePatch(fLasOut, headerLas, lasPnt, realReadPoints);
+		pointReserved=pointReserved-realReadPoints;
 	};//while
 
 	delete[]lasPnt; lasPnt = nullptr;
