@@ -56,6 +56,16 @@ public:
 	* @return
 	*/
 	long LASClassifyByColor(ILASDataset* dataset, std::vector<ColoInfo> colorInfo);
+
+    /**
+     * export points by type
+     * @param dataset
+     * @param classType
+     * @param pathOut
+     * @return
+     * TODO:
+     */
+    long LASClassifyByType(ILASDataset* dataset,eLASClassification classType,const char* pathOut);
 };
 
 

@@ -56,11 +56,13 @@ class LidarPatchReader : public LidarMemReader
 {
 public:
 
-	/*split las data into patches
-	 * const char* pathLas
-	 * const char* pathSplitDir
-	 * int splitSize
-	 * */
+	/**
+	 * split las data into patches
+	 * @param pathLas
+	 * @param pathSplitDir
+	 * @param splitSize
+	 * @return
+	 */
 	long LidarReader_SplitPatch(const char* pathLas,const char* pathSplitDir,int splitSize/*MB*/);
 
 	/**
