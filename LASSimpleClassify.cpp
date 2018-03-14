@@ -7,6 +7,7 @@
 #include "LASSimpleClassify.h"
 #include "tsmToUTM.h"
 #include "Eigen/Dense"
+#include "LASReader.h"
 #include <string.h>
 #ifdef linux
 #include <unistd.h>
@@ -26,12 +27,12 @@ static void getFiles(string cate_dir,vector<string> files)
 #ifdef WIN32
 	_finddata_t file;
     long lf;
-    //ÊäÈëÎÄ¼þ¼ÐÂ·¾¶
+    //ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Â·ï¿½ï¿½
     if ((lf=_findfirst(cate_dir.c_str(), &file)) == -1) {
         cout<<cate_dir<<" not found!!!"<<endl;
     } else {
         while(_findnext(lf, &file) == 0) {
-            //Êä³öÎÄ¼þÃû
+            //ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
             //cout<<file.name<<endl;
             if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0)
                 continue;
@@ -76,7 +77,7 @@ static void getFiles(string cate_dir,vector<string> files)
 	}
 	closedir(dir);
 #endif
-	//ÅÅÐò£¬°´´ÓÐ¡µ½´óÅÅÐò
+	//ï¿½ï¿½ï¿½ò£¬°ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	sort(files.begin(), files.end());
 }
 ///////////////////////////////////////////////
@@ -168,6 +169,91 @@ long LASSimpleClassify::LASClassifyByColor(ILASDataset *dataset, std::vector<Col
 	}
 
 	return 0;
+}
+/////////////////////////////////////
+
+
+long LASClassifyMemLimited::LASExportClassifiedPoints(const char* pathLas,eLASClassification type,const char* pathExport)
+{
+    FILE* fLasIn = nullptr, *fLasOut = nullptr;
+    fLasIn = fopen(pathLas, "rb");
+    fLasOut = fopen(pathExport, "wb");
+
+    if (fLasIn == nullptr || fLasOut == nullptr)
+        return -1;
+
+    LASHeader    headerLas;
+    LidarPatchReader patchReaderLine;
+    patchReaderLine.LidarReader_ReadHeader(fLasIn,headerLas);
+    int curPos = ftell(fLasIn);
+
+    int typesNumber=0;
+    int pointReserved = headerLas.number_of_point_records;
+    const int readPatch = 100000;
+    LASPoint* lasPnt = nullptr;
+    try
+    {
+        lasPnt = new LASPoint[readPatch];
+    }
+    catch (bad_alloc e) {
+        printf("%s\n", e.what());
+        return -1;
+    }
+
+    double xmin=99999999,xmax=-9999999;
+    double ymin=99999999,ymax=-9999999;
+    double zmin=99999999,zmax=-9999999;
+
+    //get type numberã€€and range first
+    int realReadPoints = 0;
+    while (!feof(fLasIn)) {
+        if (pointReserved < readPatch)
+            realReadPoints = pointReserved;
+        else
+            realReadPoints = readPatch;
+
+        Rect2D rect = patchReaderLine.LidarReader_ReadPatch(fLasIn, headerLas, lasPnt, realReadPoints);
+        for(int i=0;i<realReadPoints;++i)
+        {
+            if(lasPnt[i].m_classify==type) {
+                typesNumber++;
+                xmin = min(xmin, lasPnt[i].m_vec3d.x);
+                xmax = max(xmax, lasPnt[i].m_vec3d.x);
+                ymin = min(ymin, lasPnt[i].m_vec3d.y);
+                ymax = max(ymax, lasPnt[i].m_vec3d.y);
+                zmin = min(zmin, lasPnt[i].m_vec3d.z);
+                zmax = max(zmax, lasPnt[i].m_vec3d.z);
+            }
+        }
+        pointReserved=pointReserved-realReadPoints;
+    };
+    fseek(fLasIn,curPos,SEEK_SET);
+    headerLas.min_x=xmin;headerLas.max_x=xmax;
+    headerLas.min_y=ymin;headerLas.max_y=ymax;
+    headerLas.min_z=zmin;headerLas.max_z=zmax;
+    headerLas.number_of_point_records = typesNumber;
+    //export
+    patchReaderLine.LidarReader_WriteHeader(fLasOut,headerLas);
+
+    realReadPoints = 0;
+    while (!feof(fLasIn)) {
+        if (pointReserved < readPatch)
+            realReadPoints = pointReserved;
+        else
+            realReadPoints = readPatch;
+
+        Rect2D rect = patchReaderLine.LidarReader_ReadPatch(fLasIn, headerLas, lasPnt, realReadPoints);
+        for(int i=0;i<realReadPoints;++i)
+        {
+            if(lasPnt[i].m_classify==type) {
+                patchReaderLine.LidarReader_WritePatch(fLasOut,headerLas,&lasPnt[i],1);
+            }
+        }
+        pointReserved=pointReserved-realReadPoints;
+    };
+    delete[]lasPnt;lasPnt= nullptr;
+    fclose(fLasIn);fLasIn= nullptr;
+    fclose(fLasOut);fLasOut= nullptr;
 }
 //////////////////////////////////
 
@@ -427,7 +513,7 @@ long LASClassifyPaperTower::LASTowerPlaneFit(ILASDataset* dataset, double range,
 
 long LASClassifyPaperTower::LASTowerRectExport(ILASDataset* dataset, vector<Rect2D> rectTowers, float cubeDis)
 {
-	//?§á??????????§Ö????
+	//?ï¿½ï¿½??????????ï¿½ï¿½????
 	double xmin = 9999999, xmax = -9999999, ymin = 9999999, ymax = -9999999, zmin = 9999999, zmax = -9999999;
 	for (int i = 0; i < rectTowers.size(); ++i)
 	{
@@ -457,7 +543,7 @@ long LASClassifyPaperTower::LASTowerRectExport(ILASDataset* dataset, vector<Rect
 	int zsize = (zmax - zmin) / cubeDis/2 + 1;
 	vector<vector<Point3D>> pnt(xsize*ysize*zsize);
 
-	//export 
+	//export
 	for (int i = 0; i < rectTowers.size(); ++i)
 	{
 		vector<int> searchRect;

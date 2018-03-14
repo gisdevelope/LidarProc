@@ -57,17 +57,25 @@ public:
 	*/
 	long LASClassifyByColor(ILASDataset* dataset, std::vector<ColoInfo> colorInfo);
 
-    /**
-     * export points by type
-     * @param dataset
-     * @param classType
-     * @param pathOut
-     * @return
-     * TODO:
-     */
-    long LASClassifyByType(ILASDataset* dataset,eLASClassification classType,const char* pathOut);
 };
 
+/**
+ * classify las dataset with limited memory
+ */
+class LASClassifyMemLimited: public LASSimpleClassify
+{
+public:
+    /**
+     * export the dataset by each types
+     * @param pathLas
+     * @param type
+     * @param pathExport
+     * @return
+     */
+    long LASExportClassifiedPoints(const char* pathLas,eLASClassification type,const char* pathExport);
+
+
+};
 
 class LASClassifyTower :public LASSimpleClassify
 {
