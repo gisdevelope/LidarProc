@@ -34,6 +34,15 @@ public:
 	*/
 	long LASColorMap_Map(const char* pathLas, const char* pathImg, const char* pathOutLas);
 
+	/**
+	 * find images intersect with the range of the las
+	 * @param pathLas
+	 * @param pathImgDir
+	 * @param pImgs
+	 * @return
+	 */
+	long LASCorlorMap_ImageFind(const char* pathLas,const char* pathImgDir,vector<string> &pImgs);
+
 private:
 	/**
 	* »ñÈ¡Ó°Ïñ·¶Î§

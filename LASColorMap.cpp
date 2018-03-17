@@ -184,6 +184,55 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, const char* pathImg, cons
 	return 0;
 }
 
+long LASColorMap::LASCorlorMap_ImageFind(const char* pathLas,const char* pathImgDir,vector<string> &pImgs)
+{
+    ILASDataset *lasDataset = new ILASDataset();
+    LASReader   *lasReader  = new LidarPatchReader();
+    lasReader->LidarReader_Open(pathLas,lasDataset);
+    Rect2D rectLas;
+    rectLas.minx=lasDataset->m_lasHeader.min_x;
+    rectLas.miny=lasDataset->m_lasHeader.min_y;
+    rectLas.maxx=lasDataset->m_lasHeader.max_x;
+    rectLas.maxy=lasDataset->m_lasHeader.max_y;
+
+    //get image list
+    pImgs.clear();
+    vector<string> imgs;
+
+    getFiles(pathImgDir,imgs);
+
+    GDALAllRegister();
+    for(int i=0;i<imgs.size();++i){
+        //Image Range
+        GDALDatasetH dataset = GDALOpen(imgs[i].c_str(),GA_ReadOnly);
+        int xsize = GDALGetRasterXSize(dataset);
+        int ysize = GDALGetRasterYSize(dataset);
+
+        double adfGeoTransform[6];
+        GDALGetGeoTransform(dataset,adfGeoTransform);
+
+        //Get range
+        double xmax = adfGeoTransform[0]+xsize*adfGeoTransform[1]+ysize*adfGeoTransform[2];
+        double ymax = adfGeoTransform[3]+xsize*adfGeoTransform[4]+ysize*adfGeoTransform[5];
+
+        Rect2D rectImg;
+        rectImg.minx = adfGeoTransform[0];
+        rectImg.miny = adfGeoTransform[3];
+        rectImg.maxx = xmax;
+        rectImg.maxy = ymax;
+
+        if(GeometryRelation::IsRectIntersectRect(rectLas,rectImg));
+        {
+            imgs.push_back(imgs[i]);
+        }
+        GDALClose(dataset);
+    }
+
+    delete lasDataset;
+    delete lasReader;
+    return 0;
+}
+
 Rect2D LASColorMap::LASColorMap_ImageRange(GDALDatasetH m_dataset)
 {
 	double adfGeoTransform[6];
