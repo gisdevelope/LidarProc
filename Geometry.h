@@ -1,6 +1,6 @@
 #pragma once
 /*****************************************************************************
-* @brief : ¼¸ºÎÐÎ×´µÄ¶¨Òå
+* @brief : ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´ï¿½Ä¶ï¿½ï¿½ï¿½
 * @author : W.W.Frank
 * @date : 2015/11/30 8:21
 * @version : version 1.0
@@ -22,14 +22,15 @@
 #include <vector>
 
 using namespace std;
+#define PI 3.14159265354
 
 /*****************************************************************************
-* @brief : µãÎ»ÖÃµÄ¶¨Òå
+* @brief : ï¿½ï¿½Î»ï¿½ÃµÄ¶ï¿½ï¿½ï¿½
 * @author : W.W.Frank
 * @date : 2015/11/29 14:20
 * @version : version 1.0
 *****************************************************************************/
-//·ÏÆú
+//ï¿½ï¿½ï¿½ï¿½
 //struct  vector3D
 //{
 //    vector3D(double x,double y,double z){this->x=x;this->y=y;this->z=z;}
@@ -92,7 +93,7 @@ using namespace std;
 //    return vector3D(x / scalar,y / scalar,z/scalar);
 //}
 /*****************************************************************************
-* @brief : µã¼¯µÄ¶¨Òå
+* @brief : ï¿½ã¼¯ï¿½Ä¶ï¿½ï¿½ï¿½
 * @author : W.W.Frank
 * @date : 2015/11/30 9:28
 * @version : version 1.0
@@ -240,7 +241,7 @@ double Point2_T<T>::Distance(const Point2_T<T>& pt) const
 }
 
 
-//ÈýÎ¬µã
+//ï¿½ï¿½Î¬ï¿½ï¿½
 template<class T> class Point3_T;
 #define RCPoint3_T const Point3_T<T>&
 
@@ -377,7 +378,7 @@ double Point3_T<T>::Distance(const Point3_T<T>& pt) const
 #endif // _POINT_H_
 
 /*****************************************************************************
-* @brief : RECT¾ØÐÎµÄ¶¨Òå
+* @brief : RECTï¿½ï¿½ï¿½ÎµÄ¶ï¿½ï¿½ï¿½
 * @author : W.W.Frank
 * @date : 2015/11/30 8:21
 * @version : version 1.0
@@ -399,15 +400,15 @@ typedef const Rect2I& RCRect2I;
 
 enum eRectPointRelation
 {
-	RF_In = 0x00,	// ÔÚ¾ØÐÎÄÚ
-	RF_OutLeft = 0x01,	// ÔÚ¾ØÐÎ×ó±ß
-	RF_OutRight = 0x02,	// ÔÚ¾ØÐÎÓÒ±ß
-	RF_OutTop = 0x04,	// ÔÚ¾ØÐÎÉÏ±ß
-	RF_OutBottom = 0x08,	// ÔÚ¾ØÐÎÏÂ±ß
-	RF_OnLeft = 0x10,	// ÔÚ¾ØÐÎ×ó±ß½çÉÏ£¬°üÀ¨ÑÓ³¤Ïß
-	RF_OnRight = 0x20, // ÔÚ¾ØÐÎÓÒ±ß½çÉÏ
-	RF_OnTop = 0x40, // ÔÚ¾ØÐÎÉÏ±ß½çÉÏ
-	RF_OnBottom = 0x80, // ÔÚ¾ØÐÎÏÂ±ß½çÉÏ
+	RF_In = 0x00,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½
+	RF_OutLeft = 0x01,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	RF_OutRight = 0x02,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ò±ï¿½
+	RF_OutTop = 0x04,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+	RF_OutBottom = 0x08,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Â±ï¿½
+	RF_OnLeft = 0x10,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
+	RF_OnRight = 0x20, // ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ò±ß½ï¿½ï¿½ï¿½
+	RF_OnTop = 0x40, // ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ï±ß½ï¿½ï¿½ï¿½
+	RF_OnBottom = 0x80, // ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Â±ß½ï¿½ï¿½ï¿½
 };
 
 template<class T>
@@ -547,19 +548,19 @@ void Rect2_T<T>::UnionRect(RCRect2_T r1, RCRect2_T r2)
 	maxy = max(r1.maxy, r2.maxy);
 }
 /********************************************************************
-*  ÓÃÓÚµãÓë¾ØÐÎ¹ØÏµµÄ±ê¼Ç
+*  ï¿½ï¿½ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½Î¹ï¿½Ïµï¿½Ä±ï¿½ï¿½
 ********************************************************************/
 //enum eRectPointRelation
 //{
-//    RF_In		= 0x00,	// ÔÚ¾ØÐÎÄÚ
-//    RF_OutLeft	= 0x01,	// ÔÚ¾ØÐÎ×ó±ß
-//    RF_OutRight	= 0x02,	// ÔÚ¾ØÐÎÓÒ±ß
-//    RF_OutTop	= 0x04,	// ÔÚ¾ØÐÎÉÏ±ß
-//    RF_OutBottom= 0x08,	// ÔÚ¾ØÐÎÏÂ±ß
-//    RF_OnLeft	= 0x10,	// ÔÚ¾ØÐÎ×ó±ß½çÉÏ£¬°üÀ¨ÑÓ³¤Ïß
-//    RF_OnRight	= 0x20, // ÔÚ¾ØÐÎÓÒ±ß½çÉÏ
-//    RF_OnTop	= 0x40, // ÔÚ¾ØÐÎÉÏ±ß½çÉÏ
-//    RF_OnBottom	= 0x80, // ÔÚ¾ØÐÎÏÂ±ß½çÉÏ
+//    RF_In		= 0x00,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½
+//    RF_OutLeft	= 0x01,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//    RF_OutRight	= 0x02,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ò±ï¿½
+//    RF_OutTop	= 0x04,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ï±ï¿½
+//    RF_OutBottom= 0x08,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Â±ï¿½
+//    RF_OnLeft	= 0x10,	// ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
+//    RF_OnRight	= 0x20, // ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ò±ß½ï¿½ï¿½ï¿½
+//    RF_OnTop	= 0x40, // ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ï±ß½ï¿½ï¿½ï¿½
+//    RF_OnBottom	= 0x80, // ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Â±ß½ï¿½ï¿½ï¿½
 //};
 
 template<class T>
@@ -572,13 +573,13 @@ int PointInRect(T x, T y, RCRect2_T r, double tolerance)
 	if (r.minx == r.maxx && dis1 < tolerance && dis2 < tolerance)
 		return b;
 
-	if (dis1 < dis2 && dis1 < tolerance)		 // ÔÚ×ó±ß½çÉÏ
+	if (dis1 < dis2 && dis1 < tolerance)		 // ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½ï¿½
 		b |= RF_OnLeft;
-	else if (dis1 > dis2 && dis2 < tolerance) // ÔÚÓÒ±ß½çÉÏ
+	else if (dis1 > dis2 && dis2 < tolerance) // ï¿½ï¿½ï¿½Ò±ß½ï¿½ï¿½ï¿½
 		b |= RF_OnRight;
-	else if (x < r.minx)						 // ÔÚ×ó±ß
+	else if (x < r.minx)						 // ï¿½ï¿½ï¿½ï¿½ï¿½
 		b |= RF_OutLeft;
-	else if (x > r.maxx)					 // ÔÚÓÒ±ß
+	else if (x > r.maxx)					 // ï¿½ï¿½ï¿½Ò±ï¿½
 		b |= RF_OutRight;
 
 	dis1 = abs(y - r.miny);
@@ -586,56 +587,56 @@ int PointInRect(T x, T y, RCRect2_T r, double tolerance)
 	if (r.miny == r.maxy && dis1 < tolerance && dis2 < tolerance)
 		return b;
 
-	if (dis1 < dis2 && dis1 < tolerance)		 // ÔÚÉÏ±ß½çÉÏ
+	if (dis1 < dis2 && dis1 < tolerance)		 // ï¿½ï¿½ï¿½Ï±ß½ï¿½ï¿½ï¿½
 		b |= RF_OnTop;
-	else if (dis1 > dis2 && dis2 < tolerance) // ÔÚÏÂ±ß½çÉÏ
+	else if (dis1 > dis2 && dis2 < tolerance) // ï¿½ï¿½ï¿½Â±ß½ï¿½ï¿½ï¿½
 		b |= RF_OnBottom;
-	else if (y > r.maxy)					 // ÔÚÉÏ±ß
+	else if (y > r.maxy)					 // ï¿½ï¿½ï¿½Ï±ï¿½
 		b |= RF_OutBottom;
-	else if (y < r.miny)						 // ÔÚÏÂ±ß
+	else if (y < r.miny)						 // ï¿½ï¿½ï¿½Â±ï¿½
 		b |= RF_OutTop;
 
 	return b;
 }
 
 /********************************************************************
-*  ÀûÓÃRectPointRelation±ê¼ÇÀ´°ïÖúÅÐ¶ÏµãÓë¾ØÐÎµÄ¹ØÏµ
+*  ï¿½ï¿½ï¿½ï¿½RectPointRelationï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ïµï¿½ï¿½ï¿½ï¿½ï¿½ÎµÄ¹ï¿½Ïµ
 ********************************************************************/
 class RectPointRelationJudge
 {
 public:
 	/*
-	* ÊÇ·ñÔÚ×ó±ß½çÉÏ£¬°üÀ¨¶¥µãºÍÑÓ³¤Ïß
+	* ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
 	*/
 	static bool IsOnLeftEdge(int rel) { return (rel & RF_OnLeft) == RF_OnLeft; }
 	/*
-	* ÊÇ·ñÔÚÓÒ±ß½çÉÏ£¬°üÀ¨¶¥µãºÍÑÓ³¤Ïß
+	* ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ò±ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
 	*/
 	static bool IsOnRightEdge(int rel) { return (rel & RF_OnRight) == RF_OnRight; }
 	/*
-	* ÊÇ·ñÔÚÉÏ±ß½çÉÏ£¬°üÀ¨¶¥µãºÍÑÓ³¤Ïß
+	* ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ï±ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
 	*/
 	static bool IsOnTopEdge(int rel) { return (rel & RF_OnTop) == RF_OnTop; }
 	/*
-	* ÊÇ·ñÔÚÏÂ±ß½çÉÏ£¬°üÀ¨¶¥µãºÍÑÓ³¤Ïß
+	* ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Â±ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
 	*/
 	static bool IsOnBottomEdge(int rel) { return (rel & RF_OnBottom) == RF_OnBottom; }
 	/*
-	* ÊÇ·ñÔÚ¾ØÐÎÄÚ£¬²»°üÀ¨±ß½ç
+	* ï¿½Ç·ï¿½ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½
 	*/
 	static bool IsInRect(int rel) { return rel == RF_In; }
 	/*
-	* ÊÇ·ñÔÚ¾ØÐÎÍâ
+	* ï¿½Ç·ï¿½ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½
 	*/
 	static bool IsOutRect(int rel) { return (rel & 0x0F) != 0; }
 	/*
-	* ÊÇ·ñÔÚ¾ØÐÎ±ß½çÉÏ£¬²»°üÀ¨±ß½çÑÓ³¤Ïß£¬²»°üÀ¨¶¥µã
+	* ï¿½Ç·ï¿½ï¿½Ú¾ï¿½ï¿½Î±ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ó³ï¿½ï¿½ß£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	*/
 	static bool IsOnEdge(int rel) { return !IsInRect(rel) && !IsOutRect(rel); }
 	/*
-	* ÊÇ·ñÔÚ¾ØÐÎ±ß½çÉÏ£¬²»°üÀ¨±ß½çÑÓ³¤Ïß£¬²»°üÀ¨¶¥µã
-	* !!! µ÷ÓÃÕß×Ô¼ºÈ·±£²»ÔÚ¶¥µãÉÏ
-	* @param return : ²»ÔÚ±ß½çÉÏ·µ»Ø0£¬×ó±ß½ç·µ»Ø1£¬ÓÒ±ß½ç·µ»Ø2£¬ÉÏ±ß½ç·µ»Ø3£¬ÏÂ±ß½ç·µ»Ø4
+	* ï¿½Ç·ï¿½ï¿½Ú¾ï¿½ï¿½Î±ß½ï¿½ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ó³ï¿½ï¿½ß£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	* !!! ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½
+	* @param return : ï¿½ï¿½ï¿½Ú±ß½ï¿½ï¿½Ï·ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½ß½ç·µï¿½ï¿½1ï¿½ï¿½ï¿½Ò±ß½ç·µï¿½ï¿½2ï¿½ï¿½ï¿½Ï±ß½ç·µï¿½ï¿½3ï¿½ï¿½ï¿½Â±ß½ç·µï¿½ï¿½4
 	*/
 	static int OnEdgeNo(int rel)
 	{
@@ -653,12 +654,12 @@ public:
 		return 0;
 	}
 	/*
-	* µãËùÔÚµÄ¾ØÐÎ¶¥µãÐòºÅ
-	* @param return : Ã»ÔÚ¶¨µãÉÏÎª0£¬×óÉÏ½Ç¶¥µãÎª1£¬ÓÒÉÏ½Ç¶¥µãÎª2£¬ÓÒÏÂ½Ç¶¥µãÎª3£¬×óÏÂ½Ç¶¥µãÎª4
+	* ï¿½ï¿½ï¿½ï¿½ï¿½ÚµÄ¾ï¿½ï¿½Î¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	* @param return : Ã»ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½Ï½Ç¶ï¿½ï¿½ï¿½Îª1ï¿½ï¿½ï¿½ï¿½ï¿½Ï½Ç¶ï¿½ï¿½ï¿½Îª2ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç¶ï¿½ï¿½ï¿½Îª3ï¿½ï¿½ï¿½ï¿½ï¿½Â½Ç¶ï¿½ï¿½ï¿½Îª4
 	*/
 	static int OnVertexNo(int rel)
 	{
-		if ((rel & 0xF0) != 0) // ÖÁÉÙÔÚ±ß½çÑÓ³¤ÏßÉÏ
+		if ((rel & 0xF0) != 0) // ï¿½ï¿½ï¿½ï¿½ï¿½Ú±ß½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if ((rel & RF_OnLeft) == RF_OnLeft)
 			{
@@ -681,7 +682,7 @@ public:
 #endif
 
 /*****************************************************************************
-* @brief : Ð±¾ØÐÎµÄ¶¨Òå
+* @brief : Ð±ï¿½ï¿½ï¿½ÎµÄ¶ï¿½ï¿½ï¿½
 * @author : W.W.Frank
 * @date : 2015/11/30 9:27
 * @version : version 1.0
@@ -698,7 +699,7 @@ public:
 #endif
 
 /*****************************************************************************
-* @brief : AABB×îÐ¡°üÎ§ºÐµÄ¶¨Òå
+* @brief : AABBï¿½ï¿½Ð¡ï¿½ï¿½Î§ï¿½ÐµÄ¶ï¿½ï¿½ï¿½
 * @author : W.W.Frank
 * @date : 2015/11/30 16:37
 * @version : version 1.0
@@ -711,11 +712,11 @@ class AABB
 {
 public:
 	/*
-	* xyzÖá×ø±ê×îÐ¡µã
+	* xyzï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡ï¿½ï¿½
 	*/
 	Point3D PointMin;
 	/*
-	* xyzÖá×ø±ê×î´óµã
+	* xyzï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	*/
 	Point3D PointMax;
 
@@ -745,7 +746,7 @@ public:
 	void Assign(const Point3D& min, const Point3D& max) { PointMin = min; PointMax = max; }
 	void Assign(double mx, double my, double mz, double Mx, double My, double Mz) { PointMin.x = mx; PointMin.y = my; PointMin.z = mz; PointMax.x = Mx; PointMax.y = My; PointMax.z = Mz; }
 	/*
-	* ¸ù¾Ý´«ÈëµÄµã¼¯¼ÆËãÍâ°ü
+	* ï¿½ï¿½ï¿½Ý´ï¿½ï¿½ï¿½Äµã¼¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	*/
 	void Assign(const Point2Ds& pts);
 	/*
@@ -781,7 +782,7 @@ public:
 
 	void Union(const AABB& rhs);
 	/*
-	* ·µ»Ø8¸ö¶¥µãÊý×é£¬¶¥µãÅÅÁÐË³ÐòÈçÍ¼
+	* ï¿½ï¿½ï¿½ï¿½8ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½Í¼
 	<pre>
 	   1-----2
 	  /|    /|
@@ -794,15 +795,15 @@ public:
 	</pre>
 	*/
 	void GetCorners(Point3D  _Corners[8]) const;
-	//ÐÂÌí¼Ó£¬Ñ¡ÔñÊÇºöÂÔ¸ß³Ì cz 090512***********************************
+	//ï¿½ï¿½ï¿½ï¿½Ó£ï¿½Ñ¡ï¿½ï¿½ï¿½Çºï¿½ï¿½Ô¸ß³ï¿½ cz 090512***********************************
 	bool IsIntersect2D(const AABB& b2) const;
 	bool IsInBox2D(const Point3D& pt, bool includeBound = true) const;
-	//ÐÂÌí¼Ó£¬Ñ¡ÔñÊÇºöÂÔ¸ß³Ì cz 090512*****************************************
+	//ï¿½ï¿½ï¿½ï¿½Ó£ï¿½Ñ¡ï¿½ï¿½ï¿½Çºï¿½ï¿½Ô¸ß³ï¿½ cz 090512*****************************************
 
 	bool IsIntersect(const AABB& b2, bool ignorez = false) const;
 	AABB Intersection(const AABB& b2) const;
 	/*
-	* ¼ÆËã°üÎ§ºÐÌå»ý
+	* ï¿½ï¿½ï¿½ï¿½ï¿½Î§ï¿½ï¿½ï¿½ï¿½ï¿½
 	*/
 	inline double Volume(void) const
 	{
@@ -810,7 +811,7 @@ public:
 		return diff.x * diff.y * diff.z;
 	}
 	/*
-	* ÅÐ¶ÏµãÊÇ·ñÔÚ°üÎ§ºÐÄÚ
+	* ï¿½Ð¶Ïµï¿½ï¿½Ç·ï¿½ï¿½Ú°ï¿½Î§ï¿½ï¿½ï¿½ï¿½
 	*/
 	bool IsInBox(const Point3D& pt, bool includeBound = true, bool ignoreZ = false) const;
 	bool IsInBox(const Point3D& pt, double tolorance, bool ignoreZ = false) const;

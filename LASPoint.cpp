@@ -119,7 +119,7 @@ ILASDataset::ILASDataset()
 }
 ILASDataset::~ILASDataset()
 {
-	printf("�����ͷ��ڴ�...\n");
+	printf("destructor...\n");
 	if (m_lasRectangles != NULL)
 		delete[]m_lasRectangles;
 	if (m_LASPointID != NULL)

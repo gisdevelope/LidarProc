@@ -7,6 +7,7 @@
 #define LASLIB_LASPOINT_H
 #include <string>
 #include <functional>
+#include <dirent.h>
 
 #include "LASHeader.h"
 #include "Geometry.h"
@@ -14,7 +15,10 @@
 
 using namespace std;
 
-static void getFiles(string cate_dir,vector<string> files)
+#define LATLONGITUDE 1
+#define PROCESS_OUTPUT_SCREEN 1
+
+static void getFiles(string cate_dir,vector<string> &files)
 {
 #ifdef WIN32
     _finddata_t file;
@@ -48,14 +52,22 @@ static void getFiles(string cate_dir,vector<string> files)
         if(strcmp(ptr->d_name,".")==0 || strcmp(ptr->d_name,"..")==0)    ///current dir OR parrent dir
             continue;
         else if(ptr->d_type == 8)    ///file
+		{
+			string name = string(ptr->d_name);
+			string::size_type pos=name.rfind('.');
+			string ext=name.substr(pos==string::npos?name.length():pos+1);
+
+			if( !strcmp("tif", ext.c_str() ))
+				files.push_back(string(cate_dir)+name);
+
+		}
             //printf("d_name:%s/%s\n",basePath,ptr->d_name);
-            files.push_back(ptr->d_name);
         else if(ptr->d_type == 10)    ///link file
             //printf("d_name:%s/%s\n",basePath,ptr->d_name);
             continue;
         else if(ptr->d_type == 4)    ///dir
         {
-            files.push_back(ptr->d_name);
+            files.push_back(string(ptr->d_name));
             /*
                 memset(base,'\0',sizeof(base));
                 strcpy(base,basePath);
@@ -67,7 +79,7 @@ static void getFiles(string cate_dir,vector<string> files)
     }
     closedir(dir);
 #endif
-    //???????§³????????
+    //???????ï¿½ï¿½????????
     sort(files.begin(), files.end());
 }
 
@@ -77,7 +89,7 @@ static void getFiles(string cate_dir,vector<string> files)
 static unsigned char GetReturnNumber(unsigned char temp) { return (temp & 0x07) ; /*0x00000111*/ }
 static unsigned char GetNumberOfReturns(unsigned char temp) { return (temp & 0x38) >> 3; /*00111000*/ }
 
-//´ý²âÊÔ
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 static bool GetScanDirectionFlag(unsigned char temp) { return ((temp & 0x02) >> 1) == 1 ? true : false; /*00000010*/ }
 static bool GetEdgeOfFlightLine(unsigned char temp) { return temp & 0x01;	/*00000001*/ }
 
@@ -91,7 +103,7 @@ static bool GetEdgeOfFlightLine(unsigned char temp) { return temp & 0x01;	/*0000
 
 typedef RTree<int, double, 2, double, 4>  LASBlockTree;
 
-/*¼¤¹â»Ø²¨ÐÅºÅ*/
+/*ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½Åºï¿½*/
 enum  eLASEcho
 {
 	eLidarEchoOnly = 0,
@@ -99,24 +111,24 @@ enum  eLASEcho
 	eLidarEchoMidian = 2,
 	eLidarEchoLast = 3
 };
-/*µãÔÆµÄÀà±ð*/
+/*ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½*/
 #pragma pack(1)
 enum  eLASClassification
 {
-	elcCreated			 = 0,	// ´´½¨µÄ£¬Ã»ÓÐ±»·ÖÀàµÄ
-	elcUnclassified		 = 1,	// ÎÞÀà±ðµÄ£¬»òÎÞ·¨Ê¶±ðÀà±ðµÄµã
-	elcGround			 = 2,	// µØÃæµã
-	elcLowVegetation	 = 3,	// °«µÄÖ²±»
-	elcMediumVegetation  = 4,	// ÖÐµÈ¸ß¶ÈµÄÖ²±»
-	elcHighVegetation	 = 5,	// ¸ßµÄÖ²±»
-	elcBuilding			 = 6,	// ½¨ÖþÎï
-	elcLowPoint			 = 7,	// µÍÓÚµØ±íµÄµã£¨ÔëÒô£©
-	elcModelKeyPoint	 = 8,	// ¿ØÖÆµã
+	elcCreated			 = 0,	// ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½Ã»ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	elcUnclassified		 = 1,	// ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½Þ·ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½
+	elcGround			 = 2,	// ï¿½ï¿½ï¿½ï¿½ï¿½
+	elcLowVegetation	 = 3,	// ï¿½ï¿½ï¿½ï¿½Ö²ï¿½ï¿½
+	elcMediumVegetation  = 4,	// ï¿½ÐµÈ¸ß¶Èµï¿½Ö²ï¿½ï¿½
+	elcHighVegetation	 = 5,	// ï¿½ßµï¿½Ö²ï¿½ï¿½
+	elcBuilding			 = 6,	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	elcLowPoint			 = 7,	// ï¿½ï¿½ï¿½ÚµØ±ï¿½Äµã£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	elcModelKeyPoint	 = 8,	// ï¿½ï¿½ï¿½Æµï¿½
 	elcWater			 = 9,	// Ë®
-	elcOverlapPoint		 = 12,	// º½´øÖØµþµã
-	elcDanger			 = 13,	// ÏßÂ·Î£ÏÕµã
-	elcTowerRange		 = 14,	// ¸ËËþ·¶Î§
-	elcDeletedPoint		 = -1	// ÒÑÉ¾³ýµÄµã
+	elcOverlapPoint		 = 12,	// ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½
+	elcDanger			 = 13,	// ï¿½ï¿½Â·Î£ï¿½Õµï¿½
+	elcTowerRange		 = 14,	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î§
+	elcDeletedPoint		 = -1	// ï¿½ï¿½É¾ï¿½ï¿½ï¿½Äµï¿½
 };
 #pragma pack()
 
@@ -124,7 +136,7 @@ static eLASClassification GetLidarClassification(unsigned char clsType)
 {
 	return (eLASClassification)clsType;
 }
-/*Las1.2ÑÕÉ«À©Õ¹*/
+/*Las1.2ï¿½ï¿½É«ï¿½ï¿½Õ¹*/
 #pragma pack(1)
 struct LASColorExt
 {
@@ -134,19 +146,19 @@ struct LASColorExt
 };
 #pragma pack()
 
-//lasµãÎÄ¼þ
-#pragma pack(1)/*×Ö½Ú¶ÔÆë*/
+//lasï¿½ï¿½ï¿½Ä¼ï¿½
+#pragma pack(1)/*ï¿½Ö½Ú¶ï¿½ï¿½ï¿½*/
 class LASPoint
 {
 public:
 	/*
-	* ¶ÁÐ´
+	* ï¿½ï¿½Ð´
 	*/
 	void Write(FILE *fs, const LASHeader& info) const;
 	void Read(FILE *fs, const LASHeader& info);
 
 	/**
-	* ÄÚ´æÖÐ½âÎö³öµ¥¸öµÄµãÔÆÊý¾Ý
+	* ï¿½Ú´ï¿½ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	* @param data
 	* @param info
 	*/
@@ -166,7 +178,7 @@ public:
 };
 #pragma pack()
 
-#pragma pack(1)/*×Ö½Ú¶ÔÆë*/
+#pragma pack(1)/*ï¿½Ö½Ú¶ï¿½ï¿½ï¿½*/
 struct LASIndex
 {
 	int rectangle_idx;
@@ -175,7 +187,7 @@ struct LASIndex
 #pragma pack()
 
 /*
-* µãÔÆÎÄ¼þ¿é
+* ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
 */
 class LASRectBlock {
 public:
@@ -188,7 +200,7 @@ public:
 	}
 
 	/*****************************************************************************
-	* @brief : ·ÖÅäÄÚ´æ,ÅÐ¶ÏÊÇ·ñ½«µã·ÖÅä½øÈëÄÚ´æÖÐ£¬»òÕßÖ»´æË÷Òý
+	* @brief : ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½,ï¿½Ð¶ï¿½ï¿½Ç·ñ½«µï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	* @author : W.W.Frank
 	* @date : 2015/11/29 20:02
 	* @version : version 1.0
@@ -205,7 +217,7 @@ public:
 };
 
 /**
-* µãÔÆÊý¾Ý¼¯
+* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½
 */
 class ILASDataset {
 
@@ -213,22 +225,22 @@ public:
 	ILASDataset();
 	~ILASDataset();
 
-	//¹¹½¨RÊ÷µÄ¹ý³Ì
+	//ï¿½ï¿½ï¿½ï¿½Rï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½
 	long LASDataset_BuildTree();
-	//·ÖÅäÄÚ´æ£¬ÊÇ·ñÔÚÄÚ´æÖÐ·ÖÅä£¬»òÕßÖ»ÊÇ¶ÁÈ¡index
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ú´æ£¬ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ð·ï¿½ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½Ö»ï¿½Ç¶ï¿½È¡index
 	void LASDataset_AllocateMemory(int lasRects);
-	//¶ÔÊý¾Ý½øÐÐÕûÀí
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ý½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	void LASDataset_Trim(bool inMemory);
 
-	//±éÀúº¯ÊýÃ»ÏëÌ«Çå³þ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ì«ï¿½ï¿½ï¿½
 	//bool LASDataset_Iterator(callback_operation_points_Ptr ptrFun);
 
 
-	//ÕÒµ½Æ¥ÅäµÄ¾ØÐÎµÄid£¬¸ù¾Ýid»ñÈ¡ÔÚÄÄ¸ö¾ØÐÎÖÐ
+	//ï¿½Òµï¿½Æ¥ï¿½ï¿½Ä¾ï¿½ï¿½Îµï¿½idï¿½ï¿½ï¿½ï¿½ï¿½ï¿½idï¿½ï¿½È¡ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	bool LASDataset_Search(int rectID, Rect2D  searchRect, vector<int> &rects);
 	bool LASDataset_Search(int rectID, Point3D searchPnt, vector<int> &rects);
 
-	//¸ù¾ÝË³´Î´ÎÐò»ñÈ¡ÈýÎ¬µã
+	//ï¿½ï¿½ï¿½ï¿½Ë³ï¿½Î´ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½Î¬ï¿½ï¿½
 	bool LASDataset_Search(int pointID, Point3D &searchPnt);
 
 public:
@@ -243,7 +255,7 @@ public:
 	LASBlockTree		m_lasBlockTree;
 	int					m_numRectangles;
 	int                 m_totalReadLasNumber;
-	LASIndex           *m_LASPointID; //È«¾ÖµãÔÚ¾Ö²¿¾ØÐÎÖÐµÄ±àºÅ
+	LASIndex           *m_LASPointID; //È«ï¿½Öµï¿½ï¿½Ú¾Ö²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄ±ï¿½ï¿½
 };
 
 #endif //LASLIB_LASPOINT_H

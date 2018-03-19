@@ -5,6 +5,7 @@
 #include "LASColorMap.h"
 #include <iostream>
 #include "LASReader.h"
+#include "tsmToUTM.h"
 #include "GeometryAlgorithm.h"
 
 #pragma comment(lib,"gdal_i.lib")
@@ -19,7 +20,6 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, vector<string> pathImgs, 
 	reader.LidarReader_ReadHeader(fInLas, lasHeader);
 	reader.LidarReader_WriteHeader(fOutLas, lasHeader);
 
-	//ÿ��blockȡ10w����
 	const int numBlock = 100000;
 	int realRead = numBlock;
 	LASPoint* points = NULL;
@@ -31,20 +31,20 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, vector<string> pathImgs, 
 		std::cerr << e.what() << endl;
 	}
 	int totalNum = 0;
-	//��Ҫ�����Ķ�ȡ����
+    int numLasDataset = lasHeader.number_of_point_records;
 	while (realRead != 0)
 	{
-
 		Rect2D rect = reader.LidarReader_ReadPatch(fInLas, lasHeader, points, realRead);
 		totalNum += realRead;
-		printf("process points:%d\n", totalNum);
-
+        printf("proces %d-%d \r",numLasDataset,totalNum);
+//#ifdef PROCESS_OUTPUT_SCREEN
+//        printf("proces %d-%d \r",numLasDataset,totalNum);
+//#endif
 		int realProcessPoints = 0;
 
 		if (realRead == 0)
 			break;
 
-		//��ֵ���
 		char* labelPoint = new char[realRead];
 		memset(labelPoint, 0, sizeof(char)*realRead);
 
@@ -65,7 +65,6 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, vector<string> pathImgs, 
 				for (int nb = 1; nb <= 3; ++nb)
 					GDALRasterIO(GDALGetRasterBand(m_dataset, nb), GF_Read, 0, 0, xsize, ysize, data + (nb - 1)*xsize*ysize, xsize, ysize, GDT_Byte, 0, 0);
 
-				//ÿһ������Ӱ���ϵ�����
 				for (int i = 0; i<realRead; ++i)
 				{
 					if (!labelPoint[i]) {
@@ -99,6 +98,9 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, vector<string> pathImgs, 
 		if (realProcessPoints != realRead)
 			reader.LidarReader_WritePatch(fOutLas, lasHeader, points, realRead);
 	};
+#ifdef PROCESS_OUTPUT_SCREEN
+    printf("\n");
+#endif
 	delete[]points; points = NULL;
 	fclose(fInLas);
 	fclose(fOutLas);
@@ -115,7 +117,6 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, const char* pathImg, cons
 	reader.LidarReader_ReadHeader(fInLas, lasHeader);
 	reader.LidarReader_WriteHeader(fOutLas, lasHeader);
 
-	//ÿ��blockȡ10w����
 	const int numBlock = 100000;
 	int realRead = numBlock;
 	GDALAllRegister();
@@ -135,9 +136,7 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, const char* pathImg, cons
 
 
 	LASPoint* points = NULL;
-	//
 	unsigned char *data = NULL;
-
 	try {
 		data = new unsigned char[3 * xsize*ysize];
 		points = new LASPoint[numBlock];
@@ -147,7 +146,6 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, const char* pathImg, cons
 		std::cerr << e.what() << endl;
 	}
 
-	//��ȡӰ������
 	for (int i = 0; i<3; ++i)
 	{
 		GDALRasterIO(GDALGetRasterBand(m_dataset, i + 1), GF_Read, 0, 0, xsize, ysize, data + i*xsize*ysize, xsize, ysize, GDT_Byte, 0, 0);
@@ -156,7 +154,6 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, const char* pathImg, cons
 	while (realRead != 0)
 	{
 		Rect2D rect = reader.LidarReader_ReadPatch(fInLas, lasHeader, points, realRead);
-		//ÿһ������Ӱ���ϵ�����
 		for (int i = 0; i<realRead; ++i)
 		{
 			double x = points[i].m_vec3d.x;
@@ -200,9 +197,14 @@ long LASColorMap::LASCorlorMap_ImageFind(const char* pathLas,const char* pathImg
     vector<string> imgs;
 
     getFiles(pathImgDir,imgs);
-
+    int numImages = imgs.size();
     GDALAllRegister();
-    for(int i=0;i<imgs.size();++i){
+    for(int i=0;i<numImages;++i){
+
+#ifdef PROCESS_OUTPUT_SCREEN
+        //printf("%d/%d\r",numImages,i+1);
+#endif
+
         //Image Range
         GDALDatasetH dataset = GDALOpen(imgs[i].c_str(),GA_ReadOnly);
         int xsize = GDALGetRasterXSize(dataset);
@@ -216,18 +218,29 @@ long LASColorMap::LASCorlorMap_ImageFind(const char* pathLas,const char* pathImg
         double ymax = adfGeoTransform[3]+xsize*adfGeoTransform[4]+ysize*adfGeoTransform[5];
 
         Rect2D rectImg;
+
+#ifdef LATLONGITUDE
+        double xUTM,yUTM;
+        int zone=49;
+        tsmLatLongToUTM(adfGeoTransform[3],adfGeoTransform[0],&zone,&xUTM,&yUTM);
+        rectImg.minx=xUTM;rectImg.maxy=yUTM;
+        tsmLatLongToUTM(ymax,xmax,&zone,&xUTM,&yUTM);
+        rectImg.maxx=xUTM;rectImg.maxy=yUTM;
+#else
         rectImg.minx = adfGeoTransform[0];
         rectImg.miny = adfGeoTransform[3];
         rectImg.maxx = xmax;
         rectImg.maxy = ymax;
-
-        if(GeometryRelation::IsRectIntersectRect(rectLas,rectImg));
+#endif
+        if(GeometryRelation::IsRectIntersectRect(rectLas,rectImg))
         {
-            imgs.push_back(imgs[i]);
+            pImgs.push_back(imgs[i]);
         }
         GDALClose(dataset);
     }
-
+#ifdef PROCESS_OUTPUT_SCREEN
+    //printf("\n");
+#endif
     delete lasDataset;
     delete lasReader;
     return 0;
@@ -247,18 +260,36 @@ Rect2D LASColorMap::LASColorMap_ImageRange(GDALDatasetH m_dataset)
 	LASColorMap_ImageToMap(xsize, ysize, adfGeoTransform, mx2, my2);
 
 	Rect2D range;
-	range.minx = min(mx1, mx2);
+#ifdef LATLONGITUDE
+    double xUTM,yUTM;
+    int zone=49;
+    tsmLatLongToUTM(my1,mx1,&zone,&xUTM,&yUTM);
+    range.minx=xUTM;range.maxy=yUTM;
+    tsmLatLongToUTM(my2,mx2,&zone,&xUTM,&yUTM);
+    range.maxx=xUTM;range.maxy=yUTM;
+#else
+    range.minx = min(mx1, mx2);
 	range.maxx = max(mx1, mx2);
 	range.miny = min(my1, my2);
 	range.maxy = max(my1, my2);
+#endif
 
 	return  range;
 }
 
 bool LASColorMap::LASColorMap_MapToImage(double mx, double my, double adfGeoTransform[6], int &ix, int &iy)
 {
-	ix = (mx - adfGeoTransform[0]) / adfGeoTransform[1];
+#ifdef LATLONGITUDE
+    //trans to lat long
+    double lx,ly;
+    tsmUTMToLatLong(50,mx,my,&ly,&lx);
+    ix = (lx - adfGeoTransform[0]) / adfGeoTransform[1];
+    iy = (ly - adfGeoTransform[3]) / adfGeoTransform[5];
+#else
+    ix = (mx - adfGeoTransform[0]) / adfGeoTransform[1];
 	iy = (my - adfGeoTransform[3]) / adfGeoTransform[5];
+#endif
+
 	return true;
 }
 
@@ -268,4 +299,3 @@ bool LASColorMap::LASColorMap_ImageToMap(int ix, int iy, double *adfGeoTransform
 	my = adfGeoTransform[3] + adfGeoTransform[4] * ix + adfGeoTransform[5] * iy;
 	return true;
 }
-

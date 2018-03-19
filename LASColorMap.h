@@ -8,6 +8,7 @@
 
 #include "gdal_priv.h"
 #include "Geometry.h"
+#include "LASPoint.h"
 
 class ILASDataset;
 
@@ -72,6 +73,15 @@ private:
 	* @return
 	*/
 	bool LASColorMap_ImageToMap(int ix, int iy, double *adfGeoTransform, double &mx, double &my);
+
+	/**match patch
+	 * map match limited
+	 * @param rectPatch
+	 * @param lasPnts
+	 * @param pImgs
+	 * @return
+	 */
+	bool LASCorlorMap_MapPatch(Rect2D rectPatch,LASPoint* lasPnts,vector<string> &pImgs);
 };
 
 
