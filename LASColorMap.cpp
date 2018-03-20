@@ -56,6 +56,20 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, vector<string> pathImgs, 
 			GDALGetGeoTransform(m_dataset, adfGeoTrans);
 			int xsize = GDALGetRasterXSize(m_dataset);
 			int ysize = GDALGetRasterYSize(m_dataset);
+
+#ifdef LATLONGITUDE
+            double adfTransUTM[6]={0};
+            int zone=49;
+            tsmLatLongToUTM(adfGeoTrans[3],adfGeoTrans[0],&zone,&adfTransUTM[0],&adfTransUTM[3]);
+            double txmax = adfGeoTrans[0]+xsize*adfGeoTrans[1]+ysize*adfGeoTrans[2];
+            double tymax = adfGeoTrans[3]+xsize*adfGeoTrans[4]+ysize*adfGeoTrans[5];
+            double xUTM,yUTM;
+            tsmLatLongToUTM(tymax,txmax,&zone,&xUTM,&yUTM);
+            adfTransUTM[1]=(xUTM-adfTransUTM[0])/xsize;
+            adfTransUTM[5]=(xUTM-adfTransUTM[3])/ysize;
+            memcpy(adfGeoTrans,adfTransUTM,sizeof(double)*6);
+#endif
+
 			Rect2D rectImg = LASColorMap_ImageRange(m_dataset);
 
 			if (GeometryRelation::IsRectIntersectRect(rect, rectImg))
@@ -123,8 +137,22 @@ long LASColorMap::LASColorMap_Map(const char* pathLas, const char* pathImg, cons
 	GDALDatasetH m_dataset = GDALOpen(pathImg, GA_ReadOnly);
 	double adfGeoTrans[6];
 	GDALGetGeoTransform(m_dataset, adfGeoTrans);
+
 	int xsize = GDALGetRasterXSize(m_dataset);
 	int ysize = GDALGetRasterYSize(m_dataset);
+
+#ifdef LATLONGITUDE
+    double adfTransUTM[6]={0};
+    int zone=49;
+    tsmLatLongToUTM(adfGeoTrans[3],adfGeoTrans[0],&zone,&adfTransUTM[0],&adfTransUTM[3]);
+    double txmax = adfGeoTrans[0]+xsize*adfGeoTrans[1]+ysize*adfGeoTrans[2];
+    double tymax = adfGeoTrans[3]+xsize*adfGeoTrans[4]+ysize*adfGeoTrans[5];
+    double xUTM,yUTM;
+    tsmLatLongToUTM(tymax,txmax,&zone,&xUTM,&yUTM);
+    adfTransUTM[1]=(xUTM-adfTransUTM[0])/xsize;
+    adfTransUTM[5]=(xUTM-adfTransUTM[3])/ysize;
+    memcpy(adfTransUTM,adfTransUTM,sizeof(double)*6);
+#endif
 
 	Rect2D rectImg = LASColorMap_ImageRange(m_dataset);
 
@@ -212,26 +240,29 @@ long LASColorMap::LASCorlorMap_ImageFind(const char* pathLas,const char* pathImg
 
         double adfGeoTransform[6];
         GDALGetGeoTransform(dataset,adfGeoTransform);
+#ifdef LATLONGITUDE
+        double adfTransUTM[6]={0};
+        int zone=49;
+        tsmLatLongToUTM(adfGeoTransform[3],adfGeoTransform[0],&zone,&adfTransUTM[0],&adfTransUTM[3]);
+        double txmax = adfGeoTransform[0]+xsize*adfGeoTransform[1]+ysize*adfGeoTransform[2];
+        double tymax = adfGeoTransform[3]+xsize*adfGeoTransform[4]+ysize*adfGeoTransform[5];
+        double xUTM,yUTM;
+        tsmLatLongToUTM(tymax,txmax,&zone,&xUTM,&yUTM);
+        adfTransUTM[1]=(xUTM-adfTransUTM[0])/xsize;
+        adfTransUTM[5]=(xUTM-adfTransUTM[3])/ysize;
 
+        memcpy(adfGeoTransform,adfTransUTM,sizeof(double)*6);
+#endif
         //Get range
         double xmax = adfGeoTransform[0]+xsize*adfGeoTransform[1]+ysize*adfGeoTransform[2];
         double ymax = adfGeoTransform[3]+xsize*adfGeoTransform[4]+ysize*adfGeoTransform[5];
 
         Rect2D rectImg;
-
-#ifdef LATLONGITUDE
-        double xUTM,yUTM;
-        int zone=49;
-        tsmLatLongToUTM(adfGeoTransform[3],adfGeoTransform[0],&zone,&xUTM,&yUTM);
-        rectImg.minx=xUTM;rectImg.maxy=yUTM;
-        tsmLatLongToUTM(ymax,xmax,&zone,&xUTM,&yUTM);
-        rectImg.maxx=xUTM;rectImg.maxy=yUTM;
-#else
         rectImg.minx = adfGeoTransform[0];
         rectImg.miny = adfGeoTransform[3];
         rectImg.maxx = xmax;
         rectImg.maxy = ymax;
-#endif
+
         if(GeometryRelation::IsRectIntersectRect(rectLas,rectImg))
         {
             pImgs.push_back(imgs[i]);
@@ -279,16 +310,16 @@ Rect2D LASColorMap::LASColorMap_ImageRange(GDALDatasetH m_dataset)
 
 bool LASColorMap::LASColorMap_MapToImage(double mx, double my, double adfGeoTransform[6], int &ix, int &iy)
 {
-#ifdef LATLONGITUDE
-    //trans to lat long
-    double lx,ly;
-    tsmUTMToLatLong(50,mx,my,&ly,&lx);
-    ix = (lx - adfGeoTransform[0]) / adfGeoTransform[1];
-    iy = (ly - adfGeoTransform[3]) / adfGeoTransform[5];
-#else
+//#ifdef LATLONGITUDE
+//    //trans to lat long
+//    double lx,ly;
+//    tsmUTMToLatLong(50,mx,my,&ly,&lx);
+//    ix = (lx - adfGeoTransform[0]) / adfGeoTransform[1];
+//    iy = (ly - adfGeoTransform[3]) / adfGeoTransform[5];
+//#else
     ix = (mx - adfGeoTransform[0]) / adfGeoTransform[1];
 	iy = (my - adfGeoTransform[3]) / adfGeoTransform[5];
-#endif
+//#endif
 
 	return true;
 }
