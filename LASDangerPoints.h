@@ -26,6 +26,16 @@ public:
 
 
 	/**
+	 * danger level according distance
+	 * @param distance
+	 * @param dangerSectionNumber
+	 * @param datasetLine
+	 * @param datasetVegterain
+	 * @return
+	 */
+	long LASDangerPoints_Detect(float* distance,int dangerSectionNumber,ILASDataset* datasetLine, ILASDataset* datasetVegterain);
+
+	/**
 	* 将危险点区分出来写如文件中
 	* @param datasetVegterain
 	* @param pathSplit
@@ -42,6 +52,16 @@ private:
 	* @return
 	*/
 	long LASDangerPoints_PerPoint(float distance, const Point3D* pnt, ILASDataset* datasetVegterian);
+
+	/**
+	 * danger level according distance pre point
+	 * @param distance
+	 * @param dangerSectionNumber
+	 * @param pnt
+	 * @param datasetVegterian
+	 * @return
+	 */
+	long LASDangerPoints_PerPoint(float* distance,int dangerSectionNumber, const Point3D* pnt, ILASDataset* datasetVegterian);
 
 	/**
 	* 获取危险点可能所在的范围

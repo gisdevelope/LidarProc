@@ -12,7 +12,7 @@ class LASFormatTransform3DTiles {
 public:
     /**
      * 3D tiles pre json
-     * @param center
+     * @param center xyz coordinate
      * @param pathOut
      */
     void LASFormatTransform_3DTilesJson(Point3D *center,std::string pathOut);
