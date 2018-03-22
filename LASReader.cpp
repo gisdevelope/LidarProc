@@ -355,7 +355,6 @@ Rect2D LidarPatchReader::LidarReader_ReadPatch(FILE *lf, LASHeader lasHeader, LA
 	double dxMin = 99999999, dxMax = -9999999;
 	double dyMin = 99999999, dyMax = -9999999;
 
-	//ֱ�Ӷ�ȡ��
 	int numreader = 0;
 	unsigned char* buffer = new unsigned char[lasHeader.point_data_record_length];
 	while (!feof(lf)&&numreader<number) {

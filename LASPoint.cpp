@@ -41,9 +41,20 @@ void LASPoint::ExtractFromBuffer(const unsigned char* data, const LASHeader& inf
 	if (info.HasLASColorExt4())
 	{
 		size = sizeof(COLORREF);
-		memcpy(&m_colorExt, data, size);
+		COLORREF color;
+		memcpy(&color, data, size);
 		data += size;
+
+		m_colorExt.Red=(color<<24)>>24;
+		m_colorExt.Green=(color<<16)>>24;
+		m_colorExt.Blue=(color<<8)>>24;
 	}
+	if(info.HasLASColorExt6())
+	{
+		memcpy(&m_colorExt,data,sizeof(LASColorExt));
+		data+=sizeof(LASColorExt);
+	}
+
 }
 
 void LASPoint::ExportToBuffer(unsigned char* data, const LASHeader& info) const

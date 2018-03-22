@@ -7,6 +7,7 @@
 
 #include <string>
 #include "Geometry.h"
+#include "LASPoint.h"
 
 class LASFormatTransform3DTiles {
 public:
@@ -16,6 +17,14 @@ public:
      * @param pathOut
      */
     void LASFormatTransform_3DTilesJson(Point3D *center,std::string pathOut);
+
+    /**
+     * 3D tiles points
+     * @param pnts
+     * @param pntNumber
+     * @param pathOut
+     */
+    void LASFormatTransform_3DTilesPnts(LASPoint* pnts,int pntNumber,std::string pathOut);
 };
 
 

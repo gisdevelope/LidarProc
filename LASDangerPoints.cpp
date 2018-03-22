@@ -35,44 +35,43 @@ long LASDangerPoints::LASDangerPoints_PerPoint(float distance, const Point3D *pn
 long LASDangerPoints::LASDangerPoints_PerPoint(float *distance, int dangerSectionNumber, const Point3D *pnt,
 											   ILASDataset *datasetVegterian) {
 	vector<int> rectRangeIdx;
-	double *disQrder = new double [dangerSectionNumber];
-	memcpy(disQrder,distance,sizeof(double)*dangerSectionNumber);
-	sort(disQrder,disQrder+dangerSectionNumber);
-
-	LASDangerPoints_Range(pnt, disQrder[dangerSectionNumber-1], datasetVegterian, rectRangeIdx);
+	LASDangerPoints_Range(pnt, distance[dangerSectionNumber-1], datasetVegterian, rectRangeIdx);
+    if(dangerSectionNumber!=3)
+    {
+        printf("plz input 3 number range\n");
+        return -1;
+    }
 
 	for (int i = 0; i<rectRangeIdx.size(); ++i)
 	{
 		int ind = rectRangeIdx[i];
 		for (int j = 0; j <datasetVegterian->m_lasRectangles[ind].m_lasPoints_numbers; ++j) {
-			const Point3D tmpPnt = datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_vec3d;
-			for(int k=0;k<dangerSectionNumber;++k){
-				if (pnt->Distance(tmpPnt)<disQrder[k]&&k==0) {
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Red=255;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Green=0;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Blue=0;
-				}
-				else if (pnt->Distance(tmpPnt)<disQrder[k]&&k==1) {
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Red=255;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Green=255;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Blue=0;
-				}
-				else if (pnt->Distance(tmpPnt)<disQrder[k]&&k==2) {
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Red=0;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Green=0;
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Blue=255;
-				}else{
-					datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
-				}
-
-			}
-
-		}
-	}
-    delete[]disQrder;disQrder= nullptr;
+            const Point3D tmpPnt = datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_vec3d;
+            if(datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify==elcDanger)
+                continue;
+            if(pnt->Distance(tmpPnt)<distance[0])
+            {
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Red=255;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Green=0;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Blue=0;
+            }
+            else if(pnt->Distance(tmpPnt)<distance[1])
+            {
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Red=255;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Green=255;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Blue=0;
+            }
+            else if(pnt->Distance(tmpPnt)<distance[2])
+            {
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_classify = elcDanger;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Red=0;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Green=0;
+                datasetVegterian->m_lasRectangles[ind].m_lasPoints[j].m_colorExt.Blue=255;
+            }
+        }
+    }
     return 0;
 }
 
