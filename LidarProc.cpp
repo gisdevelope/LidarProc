@@ -7,8 +7,7 @@
 int main()
 {
     LASFormatTransform3DTiles trans3dTiles;
-    Point3D pnt(0,0,0);
-    trans3dTiles.LASFormatTransform_3DTilesJson(&pnt,"/home/wuwei/Data/LAS/test");
+
 	return 0;
 }
 

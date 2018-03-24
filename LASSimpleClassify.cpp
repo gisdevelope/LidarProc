@@ -618,7 +618,7 @@ long LASClassifyPaperTower::LASRegionPCAXY(const char* pathRegion, double *pca)
 long LASClassifyPaperTower::LASRegionPCA(const char* pathDir)
 {
 	vector<string> paths;
-	getFiles(pathDir, paths);
+	getFiles(pathDir, paths,"tif");
 	double *pca = new double[2 * paths.size()];
 	for (int i = 0; i < paths.size(); ++i)
 	{

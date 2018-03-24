@@ -18,7 +18,7 @@ using namespace std;
 #define LATLONGITUDE 1
 #define PROCESS_OUTPUT_SCREEN 1
 
-static void getFiles(string cate_dir,vector<string> &files)
+static void getFiles(string cate_dir,vector<string> &files,string ext)
 {
 #ifdef WIN32
     _finddata_t file;
@@ -57,7 +57,7 @@ static void getFiles(string cate_dir,vector<string> &files)
 			string::size_type pos=name.rfind('.');
 			string ext=name.substr(pos==string::npos?name.length():pos+1);
 
-			if( !strcmp("tif", ext.c_str() ))
+			if( !strcmp("ext", ext.c_str() ))
 				files.push_back(string(cate_dir)+name);
 
 		}

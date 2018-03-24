@@ -224,7 +224,7 @@ long LASColorMap::LASCorlorMap_ImageFind(const char* pathLas,const char* pathImg
     pImgs.clear();
     vector<string> imgs;
 
-    getFiles(pathImgDir,imgs);
+    getFiles(pathImgDir,imgs,"tif");
     int numImages = imgs.size();
     GDALAllRegister();
     for(int i=0;i<numImages;++i){
