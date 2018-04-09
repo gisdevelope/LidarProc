@@ -6,7 +6,7 @@
 #ifndef LASGUI_LASCORLORMAP_H
 #define LASGUI_LASCORLORMAP_H
 
-#include "gdal_priv.h"
+#include "gdal/gdal_priv.h"
 #include "Geometry.h"
 #include "LASPoint.h"
 

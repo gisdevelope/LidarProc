@@ -3,7 +3,7 @@
 #define _LAS_VECTORCLASSIFY_H_
 
 #include <map>
-#include "ogrsf_frmts.h"
+#include "gdal/ogrsf_frmts.h"
 #include "LASSimpleClassify.h"
 #include "LASPoint.h"
 

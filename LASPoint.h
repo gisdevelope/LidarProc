@@ -103,7 +103,7 @@ static bool GetEdgeOfFlightLine(unsigned char temp) { return temp & 0x01;	/*0000
 
 typedef RTree<int, double, 2, double, 4>  LASBlockTree;
 
-/*����ز��ź�*/
+/*����ز��ź�?*/
 enum  eLASEcho
 {
 	eLidarEchoOnly = 0,
@@ -111,24 +111,29 @@ enum  eLASEcho
 	eLidarEchoMidian = 2,
 	eLidarEchoLast = 3
 };
-/*���Ƶ����*/
+/*���Ƶ����?*/
 #pragma pack(1)
 enum  eLASClassification
 {
-	elcCreated			 = 0,	// �����ģ�û�б������
-	elcUnclassified		 = 1,	// �����ģ����޷�ʶ�����ĵ�
-	elcGround			 = 2,	// �����
-	elcLowVegetation	 = 3,	// ����ֲ��
-	elcMediumVegetation  = 4,	// �еȸ߶ȵ�ֲ��
-	elcHighVegetation	 = 5,	// �ߵ�ֲ��
-	elcBuilding			 = 6,	// ������
-	elcLowPoint			 = 7,	// ���ڵر�ĵ㣨������
-	elcModelKeyPoint	 = 8,	// ���Ƶ�
-	elcWater			 = 9,	// ˮ
-	elcOverlapPoint		 = 12,	// �����ص���
-	elcDanger			 = 13,	// ��·Σ�յ�
-	elcTowerRange		 = 14,	// ������Χ
-	elcDeletedPoint		 = -1	// ��ɾ���ĵ�
+	elcCreated			 = 0,	//
+	elcUnclassified		 = 1,	//
+	elcGround			 = 2,	//
+	elcLowVegetation	 = 3,	//
+	elcMediumVegetation  = 4,	//
+	elcHighVegetation	 = 5,	//
+	elcBuilding			 = 6,	//
+	elcLowPoint			 = 7,	//
+	elcModelKeyPoint	 = 8,	//
+	elcWater			 = 9,	//
+	elcOverlapPoint		 = 12,	//
+	elcDanger			 = 13,	//
+	elcDangerLevel1		 = 14,	// 
+	elcDangerLevel2		 = 15,
+	elcDangerLevel3		 = 16,
+	//...ext
+	elcDangerEnd		 = 23,
+	elcTowerRange		 = 24,	// 
+	elcDeletedPoint		 = -1	// 
 };
 #pragma pack()
 
@@ -136,7 +141,7 @@ static eLASClassification GetLidarClassification(unsigned char clsType)
 {
 	return (eLASClassification)clsType;
 }
-/*Las1.2��ɫ��չ*/
+/*Las1.2��ɫ��չ*/
 #pragma pack(1)
 struct LASColorExt
 {
@@ -146,19 +151,19 @@ struct LASColorExt
 };
 #pragma pack()
 
-//las���ļ�
-#pragma pack(1)/*�ֽڶ���*/
+
+#pragma pack(1)
 class LASPoint
 {
 public:
 	/*
-	* ��д
+	* write & read
 	*/
 	void Write(FILE *fs, const LASHeader& info) const;
 	void Read(FILE *fs, const LASHeader& info);
 
 	/**
-	* �ڴ��н����������ĵ�������
+	* extract
 	* @param data
 	* @param info
 	*/
@@ -232,7 +237,7 @@ public:
 	//�����ݽ�������
 	void LASDataset_Trim(bool inMemory);
 
-	//��������û��̫���
+	//��������û��̫���?
 	//bool LASDataset_Iterator(callback_operation_points_Ptr ptrFun);
 
 
@@ -240,7 +245,7 @@ public:
 	bool LASDataset_Search(int rectID, Rect2D  searchRect, vector<int> &rects);
 	bool LASDataset_Search(int rectID, Point3D searchPnt, vector<int> &rects);
 
-	//����˳�δ����ȡ��ά��
+	//����˳�δ����ȡ��ά��?
 	bool LASDataset_Search(int pointID, Point3D &searchPnt);
 
 public:
@@ -255,7 +260,7 @@ public:
 	LASBlockTree		m_lasBlockTree;
 	int					m_numRectangles;
 	int                 m_totalReadLasNumber;
-	LASIndex           *m_LASPointID; //ȫ�ֵ��ھֲ������еı��
+	LASIndex           *m_LASPointID; //ȫ�ֵ��ھֲ������еı��?
 };
 
 #endif //LASLIB_LASPOINT_H
