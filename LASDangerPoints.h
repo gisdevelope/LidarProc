@@ -7,6 +7,7 @@
 #define LASGUI_LASDANGERPOINTS_H
 
 #include <vector>
+#include "gdal/gdal_priv.h"
 
 #include "Geometry.h"
 #include "LASPoint.h"
@@ -74,5 +75,49 @@ private:
 	long LASDangerPoints_Range(const Point3D *pnt, float distance, ILASDataset* datasetVegterain, std::vector<int> &rectIds);
 };
 
+/*
+ * detect falling trees
+ * */
+class LASFallingTreesDangerPoints: public LASDangerPoints
+{
+public:
+    /**
+     * get height at the placce
+     * @param dataImg: dem data
+     * @param xsize :xsize of the dem image
+     * @param ysize :ysize of the dem image
+     * @param adfGeoTrans :geo transform of the dem image
+     * @param gx :geo position x
+     * @param gy :geo posision y
+     * @return height
+     */
+    float LASDangerPoints_Elevation(float* dataImg,int xsize,int ysize,double* adfGeoTrans,float gx,float gy);
+
+    /**
+     *
+     * @param distance
+     * @param dangerSectionNumber
+     * @param pathDEM
+     * @param datasetLine
+     * @param datasetVegterain
+     * @return
+     */
+    long LASDangerPoints_FallingTree(float* distance,int dangerSectionNumber,const char* pathDEM,ILASDataset* datasetLine, ILASDataset* datasetVegterain);
+
+private:
+    /**
+     *
+     * @param distance
+     * @param dangerSectionNumber
+     * @param demData
+     * @param xsize
+     * @param ysize
+     * @param pnt
+     * @param datasetVegterian
+     * @return
+     */
+    long LASDangerPoints_FallingTree_PrePoint(float* distance,int dangerSectionNumber,float *demData,int xsize,int ysize,double *adfGeotrans, const Point3D* pnt, ILASDataset* datasetVegterian);
+
+};
 
 #endif //LASGUI_LASDANGERPOINTS_H

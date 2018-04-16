@@ -163,3 +163,114 @@ long LASDangerPoints::LADDangerPoints_SplitDanger(ILASDataset *datasetVegterain,
 	lidarOpt.LidarReader_Export(pathSplit, datasetVegterain, (int)elcDanger);
 	return 0;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+float LASFallingTreesDangerPoints::LASDangerPoints_Elevation(float *dataImg, int xsize, int ysize, double *adfGeoTrans,
+                                                            float gx, float gy) {
+    double dTemp = adfGeoTrans[1] * adfGeoTrans[5] - adfGeoTrans[2] *adfGeoTrans[4];
+    int Xpixel= (adfGeoTrans[5] * (gx - adfGeoTrans[0]) -adfGeoTrans[2] * (gy - adfGeoTrans[3])) / dTemp + 0.5;
+    int Yline = (adfGeoTrans[1] * (gy - adfGeoTrans[3]) -adfGeoTrans[4] * (gx - adfGeoTrans[0])) / dTemp + 0.5;
+    if(Xpixel>xsize||Xpixel<0||Yline>ysize||Yline<0)
+        return -9999;
+    else
+        return dataImg[Yline*xsize+Xpixel];
+
+}
+
+long LASFallingTreesDangerPoints::LASDangerPoints_FallingTree(float* distance,int dangerSectionNumber,const char* pathDEM,ILASDataset* datasetLine, ILASDataset* datasetVegterain){
+    int rs = 0;
+    int numLineRects = datasetLine->m_numRectangles;
+    //dem dataset
+    GDALAllRegister();
+    GDALDatasetH dataset=GDALOpen(pathDEM,GA_ReadOnly);
+    int xsize = GDALGetRasterXSize(dataset);
+    int ysize = GDALGetRasterYSize(dataset);
+    float* dataDEM = new float[xsize*ysize];
+    GDALRasterIO(GDALGetRasterBand(dataset,1),GF_Read,0,0,xsize,ysize,dataDEM,xsize,ysize,GDT_Float32,0,0);
+    double adfGeotransform[6];
+    GDALGetGeoTransform(dataset,adfGeotransform);
+
+    for (int i = 0; i<numLineRects; ++i)
+    {
+        int numPntInRect = datasetLine->m_lasRectangles[i].m_lasPoints_numbers;
+        for (int j = 0; j<numPntInRect; ++j)
+        {
+            printf("\r%d-%d", numPntInRect, j);
+            const Point3D linePnt = datasetLine->m_lasRectangles[i].m_lasPoints[j].m_vec3d;
+            rs = rs | LASDangerPoints_FallingTree_PrePoint(distance,dangerSectionNumber,dataDEM,xsize,ysize, adfGeotransform,&linePnt, datasetVegterain);
+        }
+        printf("\n");
+    }
+    delete[]dataDEM;dataDEM= nullptr;
+    return rs;
+}
+
+long LASFallingTreesDangerPoints::LASDangerPoints_FallingTree_PrePoint(float *distance, int dangerSectionNumber,
+                                                                       float *demData, int xsize, int ysize,double *adfGeotrans
+                                                                       const Point3D *pnt,
+                                                                       ILASDataset *datasetVegterian){
+    vector<int> rectRangeIdx;
+    LASDangerPoints_Range(pnt, 3*distance[dangerSectionNumber-1], datasetVegterian, rectRangeIdx);
+    if(dangerSectionNumber!=3)
+    {
+        printf("plz input 3 number range\n");
+        return -1;
+    }
+    Point3D pntGround;
+    pntGround.x = pnt->x;
+    pntGround.y = pnt->y;
+    pntGround.z = LASDangerPoints_Elevation(demData,xsize,ysize,adfGeotrans,pnt->x,pnt->y);
+    double height = fabs(pntGround.z - pnt->z);
+
+    //only consider 3 type of classes
+    for (int i = 0; i<rectRangeIdx.size(); ++i)
+    {
+        int ind = rectRangeIdx[i];
+        for (int j = 0; j <datasetVegterian->m_lasRectangles[ind].m_lasPoints_numbers; ++j) {
+            LASPoint &laspnt = datasetVegterian->m_lasRectangles[ind].m_lasPoints[j];
+            const Point3D tmpPnt = laspnt.m_vec3d;
+            int classType = laspnt.m_classify;
+            if(classType==elcDanger)
+                continue;
+
+            if(classType>elcFallingTree&&classType<elcFallingTreeEnd)
+            {
+                if(pntGround.Distance(tmpPnt)-height<distance[0]&&classType>elcFallingTreeLevel1+1)
+                {
+                    laspnt.m_classify = elcFallingTreeLevel1;
+                    SetPointColor(laspnt,255,0,0);
+                }
+                else if(pnt->Distance(tmpPnt)-height<distance[1]&&classType>elcFallingTreeLevel2+2)
+                {
+                    laspnt.m_classify = elcFallingTreeLevel2;
+                    SetPointColor(laspnt,255,255,0);
+                }
+                else if(pnt->Distance(tmpPnt)-height<distance[2]&&classType>elcFallingTreeLevel3+3)
+                {
+                    laspnt.m_classify = elcFallingTreeLevel3;
+                    SetPointColor(laspnt,0,0,255);
+                }
+            }
+            else
+            {
+                if(pntGround.Distance(tmpPnt)-height<distance[0]&&classType>elcFallingTreeLevel1+1)
+                {
+                    laspnt.m_classify = elcFallingTreeLevel1;
+                    SetPointColor(laspnt,255,0,0);
+                }
+                else if(pnt->Distance(tmpPnt)-height<distance[1]&&classType>elcFallingTreeLevel2+2)
+                {
+                    laspnt.m_classify = elcFallingTreeLevel2;
+                    SetPointColor(laspnt,255,255,0);
+                }
+                else if(pnt->Distance(tmpPnt)-height<distance[2]&&classType>elcFallingTreeLevel3+3)
+                {
+                    laspnt.m_classify = elcFallingTreeLevel3;
+                    SetPointColor(laspnt,0,0,255);
+                }
+            }
+        }
+    }
+    return 0;
+
+}

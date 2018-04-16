@@ -254,9 +254,9 @@ long LidarMemReader::LidarReader_Write(const char *pathLidar, ILASDataset* datas
 		int i = dataset->m_LASPointID[k].rectangle_idx;
 		int j = dataset->m_LASPointID[k].point_idx_inRect;
 
-		int x = dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x / lasHeader.x_scale_factor - lasHeader.x_offset;
-		int y = dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y / lasHeader.y_scale_factor - lasHeader.y_offset;
-		int z = dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z / lasHeader.z_scale_factor - lasHeader.z_offset;
+		int x = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x- lasHeader.x_offset) / lasHeader.x_scale_factor ;
+		int y = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y - lasHeader.y_offset) / lasHeader.y_scale_factor;
+		int z = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z - lasHeader.z_offset) / lasHeader.z_scale_factor;
 		fwrite(&x, sizeof(int), 1, fLasOut);
 		fwrite(&y, sizeof(int), 1, fLasOut);
 		fwrite(&z, sizeof(int), 1, fLasOut);

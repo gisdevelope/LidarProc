@@ -132,8 +132,10 @@ bool LASHeader::HasLASColorExt4() const
 			return point_data_record_length == Data_Record_Length_of_Format0 + 4 ? true : false;
 		else if (point_data_format == 1)
 			return point_data_record_length == Data_Record_Length_of_Format1 + 4 ? true : false;
-		else
-			exit(0);
+		else{
+			printf("format error!");
+            exit(0);
+        }
 	}
 	else if (version_major == 1 && version_minor == 2)//1.2��ʽ
 	{
@@ -145,8 +147,10 @@ bool LASHeader::HasLASColorExt4() const
 			return point_data_record_length == Data_Record_Length_of_Format2 + 4 ? true : false;
 		else if (point_data_format == 3)
 			return point_data_record_length == Data_Record_Length_of_Format3 + 4 ? true : false;
-		else
-			exit(0);
+		else{
+            printf("format error!");
+            exit(0);
+        }
 	}
 	return false;
 }
@@ -158,8 +162,10 @@ bool LASHeader::HasLASColorExt6() const
 			return true;
 		else if (point_data_format == 0 || point_data_format == 1)
 			return false;
-		else
-			exit(0);
+		else{
+            printf("format error!");
+            exit(0);
+        }
 	}
 	else
 		return false;
@@ -176,12 +182,16 @@ int  LASHeader::HasLASPointExt() const
 		len = point_data_record_length - LASHeader::Data_Record_Length_of_Format2;
 	else if (point_data_format == 3)
 		len = point_data_record_length - LASHeader::Data_Record_Length_of_Format3;
-	else
-		exit(0);
+	else{
+        printf("format error!");
+        exit(0);
+    }
 	if (len >= 0)
 		return len;
-	else
-		exit(1);
+	else{
+        printf("data point length error");
+        exit(0);
+    }
 }
 void LASHeader::ReadHeader(FILE *fs)
 {

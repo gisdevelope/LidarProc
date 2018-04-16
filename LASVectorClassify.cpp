@@ -3,6 +3,8 @@
 
 #include "LASPoint.h"
 #include "LASReader.h"
+#include "gdal/gdal_priv.h"
+#include "gdal/ogrsf_frmts.h"
 
 OGREnvelope LASVectorClassify::LASRectToEnvelope(Rect2D rect)
 {
