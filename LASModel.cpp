@@ -1,14 +1,14 @@
-
 //
 // Created by wuwei on 18-1-21.
 //
 
-#include"LASModel.h"
-#include "LASPoint.h"
+#include"../LidarApplication/LASModel.h"
+#include "../LidarBase/LASPoint.h"
+#include "../LidarAlgorithm/Geometry.h"
 
 void LASModel::LASModel_PointsDense(ILASDataset* dataset, float cubeRange)
 {
-	//ï¿½ï¿½ï¿½È½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½Ð·Ö¸ï¿½
+	//Ê×ÏÈ½«¿Õ¼ä½øÐÐ·Ö¸î
 	float rangex = dataset->m_lasHeader.max_x - dataset->m_lasHeader.min_x;
 	float rangey = dataset->m_lasHeader.max_y - dataset->m_lasHeader.min_y;
 	float rangez = dataset->m_lasHeader.max_z - dataset->m_lasHeader.min_z;
@@ -21,7 +21,7 @@ void LASModel::LASModel_PointsDense(ILASDataset* dataset, float cubeRange)
 	double stepy = rangey / xsize;
 	double stepz = rangez / xsize;
 
-	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¶ï¿½
+	//¼ÆËãÁ¢·½ÌåµãÃÜ¶È
 	for (int i = 0; i<xsize; ++i)
 	{
 		for (int j = 0; j<ysize; ++j)
@@ -31,7 +31,7 @@ void LASModel::LASModel_PointsDense(ILASDataset* dataset, float cubeRange)
 				DenseSt densePre;
 				densePre.point.x = i; densePre.point.y = j; densePre.point.z = k;
 
-				//ï¿½ï¿½Î§
+				//·¶Î§
 				Rect2D rect;
 				rect.minx = i*stepx + dataset->m_lasHeader.min_x;
 				rect.maxx = (i + 1)*stepx + dataset->m_lasHeader.min_x;
@@ -43,7 +43,7 @@ void LASModel::LASModel_PointsDense(ILASDataset* dataset, float cubeRange)
 				vector<int> rectIDs;
 				dataset->LASDataset_Search(rectID, rect, rectIDs);
 
-				//ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ü¶ï¿½
+				//»ñÈ¡µãÃÜ¶È
 				int numPoints = 0;
 				for (int l = 0; l<rectIDs.size(); ++l)
 				{

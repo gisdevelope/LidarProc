@@ -4,7 +4,7 @@
 // Author      : NULL
 // Version     : 2012-7-25  V1.0
 // Copyright   : yg
-// Description : UTM投影转锟斤拷锟斤拷锟斤拷
+// Description : UTM投影转换代码
 //============================================================================
 
 void _convertSin2468(double* u)
@@ -166,11 +166,11 @@ short _init_std_pars(proj_dfn* cnsts, int k, const char* name,
 
 		if (name[0] == 'Z')
 		{
-			strcpy(NM, (EQUATORIAL ? "Equatorial " : (POLAR ? "Polar " : "Oblique ")));
-			strcat(NM, name + 1);
+			strcpy_s(NM, (EQUATORIAL ? "Equatorial " : (POLAR ? "Polar " : "Oblique ")));
+			strcat_s(NM, name + 1);
 		}
 		else
-			strcpy(NM, name);
+			strcpy_s(NM, name);
 
 		return 0;
 	}

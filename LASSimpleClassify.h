@@ -7,7 +7,7 @@
 #define LASGUI_LASSIMPLECLASSIFY_H
 
 #include <vector>
-#include "LASPoint.h"
+#include "../LidarBase/LASPoint.h"
 
 #ifndef ColorClassInfo
 typedef struct ColorClassInfo
@@ -19,6 +19,11 @@ typedef struct ColorClassInfo
 }ColoInfo;
 #endif
 
+/*
+	simple classify using the base information of the las dataset
+	author:wuwei
+	version:1.0.0.0
+*/
 class LASSimpleClassify {
 public:
 	/**
@@ -56,105 +61,26 @@ public:
 	* @return
 	*/
 	long LASClassifyByColor(ILASDataset* dataset, std::vector<ColoInfo> colorInfo);
-
 };
 
 /**
- * classify las dataset with limited memory
- */
-class LASClassifyMemLimited: public LASSimpleClassify
-{
-public:
-    /**
-     * export the dataset by each types
-     * @param pathLas
-     * @param type
-     * @param pathExport
-     * @return
-     */
-    long LASExportClassifiedPoints(const char* pathLas,eLASClassification type,const char* pathExport);
-
-
-};
-
-class LASClassifyTower :public LASSimpleClassify
-{
-public:
-	/*
-	* get tower position
-	* @param pathLocate :path
-	*/
-	long LASGetTowerLocation(const char* pathLocate);
-
-	/**
-	* tower range
-	* @param dataset :lidar dataset(in & out)
-	* @param range : classify color info (in)
-	* @param rectTowers: rect towers
-	* @return
-	*/
-	long LASTowerRect(ILASDataset* dataset, double range, vector<Rect2D> &rectTowers);
-
-	/**
-	* classify tower roughly
-	* @param dataset :lidar dataset(in & out)
-	* @param rectTowers : range tower
-	* @param heightThreshod: height thresthod
-	* @return
-	*/
-	long LASTowerRough(ILASDataset* dataset, vector<Rect2D> rectTowers, float heightThreshod = 10);
-
-
-	/**
-	* classify tower refine
-	* @param dataset :lidar dataset(in & out)
-	* @param range : range tower
-	* @param cubeDis : range cube
-	* @param cubePoints: point thresthod
-	* @return
-	*/
-	long LASTowerRefine(ILASDataset* dataset, double range, float cubeDis = 0.5, float cubePoints = 20);
-
-protected:
-	//tower position
-	vector<Point2D> m_towerLocate;
-};
-
-
-class LASClassifyPaperTower:public LASClassifyTower
+    classify las dataset with limited memory
+ 	author:wuwei
+	version:1.0.0.0
+*/
+class LASClassifyMemLimited : public LASSimpleClassify
 {
 public:
 	/**
-	* tower plane
-	* @param dataset :lidar dataset(in & out)
-	* @param range : classify color info (in)
-	* @param rectTowers: rect towers
-	* @param abc : params
+	* export the dataset by each types
+	* @param pathLas
+	* @param type
+	* @param pathExport
 	* @return
 	*/
-	long LASTowerPlaneFit(ILASDataset* dataset, double range, vector<Rect2D> &rectTowers, double *abc);
-
-	/*
-	*classify tower roughly
-	*/
-	long LASTowerRoughPlane(ILASDataset* dataset, vector<Rect2D> rectTowers, double* param, float heightThreshod = 10);
-	
-	/**
-	* @ article
-	*/
-	long LASTowerRectExport(ILASDataset* dataset, vector<Rect2D> rectTowers, float cubeDis);
-
-	/*
-	* @ article
-	* double *pca output first and second princpal component
-	*/
-	long LASRegionPCAXY(const char* pathRegion, double *pca);
-
-	/*
-	* @ article
-	*/
-	long LASRegionPCA(const char* pathDir);
+	long LASExportClassifiedPoints(const char* pathLas, eLASClassification type, const char* pathExport);
 };
+
 
 #endif //LASGUI_LASSIMPLECLASSIFY_H
 

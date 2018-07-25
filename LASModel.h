@@ -9,13 +9,15 @@
 #include <vector>
 #include <stdio.h>
 #include <memory>
-#include "Geometry.h"
+#include "../LidarAlgorithm/Geometry.h"
+using namespace GeometryLas;
 
 //点密度和模型的定义的定义
 struct DenseSt {
 	Point3I point;
 	int dense;
 };
+
 #define  LASDense std::vector<DenseSt>
 
 class ILASDataset;

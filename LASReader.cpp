@@ -1,4 +1,3 @@
-
 //
 // Created by wuwei on 17-12-26.
 //
@@ -11,7 +10,7 @@
 #define LargestMemoryToRead 2147483648
 #define BlockPointNumbers 2048
 
-long LidarMemReader::LidarReader_Open(const char* pathLidar, ILASDataset* dataset)
+long LidarMemReader::LidarReader_Open(const char* pathLidar, _OUT_ ILASDataset* dataset)
 {
 	assert(dataset != nullptr);
 
@@ -21,14 +20,16 @@ long LidarMemReader::LidarReader_Open(const char* pathLidar, ILASDataset* datase
 	if (m_lasFile == nullptr)
 		return -1;
 
+	//¶ÁÈ¡Í·ÎÄ¼ş
 	LASHeader &refHeader = dataset->m_lasHeader;
 	refHeader.ReadHeader(m_lasFile);
 	if (refHeader.number_of_variable_length_records == 0)
 	{
-
+		//Ã»ÓĞ±ä³¤×Ö¶Î
 	}
 	else
 	{
+		//¶ÁÈ¡±ä³¤×Ö¶Î
 		dataset->m_lasvarHeader = new LASVariableRecord[refHeader.number_of_variable_length_records];
 		for (int i = 0; i < refHeader.number_of_variable_length_records; ++i)
 		{
@@ -39,7 +40,7 @@ long LidarMemReader::LidarReader_Open(const char* pathLidar, ILASDataset* datase
 	return 0;
 }
 
-long LidarMemReader::LidarReader_Read(bool inMemory, int skip, ILASDataset* dataset)
+long LidarMemReader::LidarReader_Read(bool inMemory, int skip, _OUT_ ILASDataset* dataset)
 {
 	if (!m_isDatasetOpen)
 	{
@@ -62,123 +63,57 @@ long LidarMemReader::LidarReader_Read(bool inMemory, int skip, ILASDataset* data
 	}
 
 	int *pointsRect = NULL;
-	unsigned char* readOnce = NULL;
-
 	try {
 		double width = (refLasHeader.max_x - refLasHeader.min_x);
 		double height = (refLasHeader.max_y - refLasHeader.min_y);
 		double scaleWH = width / height;
-		//Ã¿ï¿½ï¿½ï¿½ï¿½Ä´ï¿½Ğ¡
-		double widthPer = width / (sqrt(totalLasNumber / BlockPointNumbers / scaleWH)) + 0.5;;
-		double heightPer = height / (sqrt(totalLasNumber / BlockPointNumbers * scaleWH)) + 0.5;;
+		double sqrt_2 = (sqrt(double(totalLasNumber) / double(BlockPointNumbers) / scaleWH));
+		//Ã¿¸ö¿éµÄ´óĞ¡
+		double widthPer = width / sqrt_2 + 0.5;;
+		double heightPer = height / sqrt_2 + 0.5;;
 		int widthNum = ceil(width / widthPer);
 		int heightNum = ceil(height / heightPer);
 
-		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í³ï¿½ï¿½ï¿½ï¿½Ï¢
-		//ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½
+		//·´ÕıÏÈÍ³¼ÆĞÅÏ¢
+		//·ÖÅäÄÚ´æ
 		dataset->LASDataset_AllocateMemory(widthNum*heightNum);
-		//ï¿½ï¿½ï¿½ï¿½Rï¿½ï¿½ï¿½á¹¹
+		//¹¹½¨RÊ÷½á¹¹
 		for (int i = 0; i < widthNum; ++i)
-			for (int j = 0; j < heightNum; ++j)
-				dataset->m_lasRectangles[j*widthNum + i].m_Rectangle.Set(i*widthPer + refLasHeader.min_x, j*heightPer + refLasHeader.min_y, (i + 1)*widthPer + refLasHeader.min_x, (j + 1)*heightPer + refLasHeader.min_y);
-
-		dataset->LASDataset_BuildTree();
-
-		//Ã¿Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ĞµÄµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-		pointsRect = new int[widthNum*heightNum];
-		memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
-		int alread_read = 0;
-		int read_once_max = BlockPointNumbers;
-		int read_once = refLasHeader.number_of_point_records;
-		long bytelen = read_once_max * refLasHeader.point_data_record_length;
-
-		readOnce = new unsigned char[bytelen];
-		totalLasNumber = 0;
-
-		//ï¿½ï¿½Ò»ï¿½Î±ï¿½ï¿½ï¿½
-		while (alread_read<refLasHeader.number_of_point_records)
 		{
-			if (read_once>read_once_max)
-				read_once = read_once_max;
-			int readLen = read_once * refLasHeader.point_data_record_length;
-			fread(readOnce, readLen, 1, m_lasFile);
-
-			//ï¿½È¶ï¿½È¡ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½
-			for (size_t i = 0; i < read_once; i += skip)
+			for (int j = 0; j < heightNum; ++j)
 			{
-				Point3D vex;
-				const unsigned char* data = readOnce + i*refLasHeader.point_data_record_length;
-				int size = sizeof(int);
-				int x, y, z;
-				memcpy(&x, data, size); memcpy(&y, data + size, size); memcpy(&z, data + size * 2, size);
-				vex.x = x * refLasHeader.x_scale_factor + refLasHeader.x_offset;
-				vex.y = y * refLasHeader.y_scale_factor + refLasHeader.y_offset;
-				vex.z = z * refLasHeader.z_scale_factor + refLasHeader.z_offset;
-
-				dataset->m_xrange[0] = max(dataset->m_xrange[0], vex.x); dataset->m_xrange[1] = min(dataset->m_xrange[1], vex.x);
-				dataset->m_yrange[0] = max(dataset->m_yrange[0], vex.y); dataset->m_yrange[1] = min(dataset->m_yrange[1], vex.y);
-				dataset->m_zrange[0] = max(dataset->m_zrange[0], vex.z); dataset->m_zrange[1] = min(dataset->m_zrange[1], vex.z);
-
-				int widtnIdx = int((vex.x - refLasHeader.min_x) / widthPer);
-				int heighIdx = int((vex.y - refLasHeader.min_y) / heightPer);
-
-				//ï¿½ï¿½ï¿½ï¿½Ã»Ò»ï¿½ï¿½Rectï¿½ï¿½ï¿½Ğ¶ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½
-				pointsRect[heighIdx*widthNum + widtnIdx]++;
-				totalLasNumber++;
+				dataset->m_lasRectangles[j*widthNum + i].m_Rectangle.Set(i*widthPer + refLasHeader.min_x,
+					j*heightPer + refLasHeader.min_y,
+					(i + 1)*widthPer + refLasHeader.min_x,
+					(j + 1)*heightPer + refLasHeader.min_y);
 			}
-			alread_read += read_once;
-			read_once_max = min(read_once_max, int(refLasHeader.number_of_point_records - alread_read));
 		}
+		dataset->LASDataset_BuildTree();
 		dataset->m_totalReadLasNumber = totalLasNumber;
 		dataset->m_LASPointID = new LASIndex[totalLasNumber];
-		//ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+
+		/*
+		//Ã¿Ò»¸ö¾ØĞÎÇøÓòÖĞµÄµãµÄË÷Òı
+		//deleted by Frank.Wu
+		//ÒÔÇ°µÄÊ±ºòÎªÁËÊ¡ÄÚ´æÍ¨¹ıLASPoint* ½øĞĞ´æ´¢£¬Òò´ËĞèÒªÓĞÁ½±é±éÀú£¬
+		//µÚÒ»±éÏÈ»ñÈ¡µ½Ã¿¸öRectÄÚµÄµãµÄÊıÄ¿£¬È»ºóÉêÇëÄÚ´æ
+		//µÚ¶ş±é²ÅÄÜ¹»»ñÈ¡Ã¿¸öµã£¬ÏÖÔÚ²ÉÓÃvector¶¯Ì¬·ÖÅäÄÚ´æ£¬Ìá¸ß¶ÁÈ¡Ğ§ÂÊµ«ÊÇÄÚ´æÀûÓÃÂÊÏÂ½µÁË
+		//pointsRect = new int[widthNum*heightNum];
+		//memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
+		//LidarReader_RectNumbers(m_lasFile, dataset, widthPer, heightPer, widthNum, heightNum, skip, pointsRect);
+
+		//»Øµ½Êı¾İÆğµã
 		fseek(m_lasFile, refLasHeader.offset_to_point_data, SEEK_SET);
 
-
-		//ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
+		//µÚ¶ş±é±éÀú»ñÈ¡Êı¾İ
 		for (int j = 0; j < widthNum*heightNum; ++j)
 			dataset->m_lasRectangles[j].LASRect_AllocateMemory(pointsRect[j], inMemory, dataset->m_lasRectangles[j].m_Rectangle);
-
 		memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
-		int totallasPnts = 0;
-		alread_read = 0;
-		read_once_max = BlockPointNumbers;
-		read_once = refLasHeader.number_of_point_records;
-
-		while (alread_read<refLasHeader.number_of_point_records)
-		{
-			if (read_once>read_once_max)
-				read_once = read_once_max;
-			int readLen = read_once * refLasHeader.point_data_record_length;
-			fread(readOnce, readLen, 1, m_lasFile);
-			//ï¿½È¶ï¿½È¡ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½
-			for (size_t i = 0; i < read_once; i += skip)
-			{
-				unsigned char* data = readOnce + i*refLasHeader.point_data_record_length;
-				LASPoint lasPnts;
-				lasPnts.ExtractFromBuffer(data, refLasHeader);
-
-				int widtnIdx = int((lasPnts.m_vec3d.x - refLasHeader.min_x) / widthPer);
-				int heighIdx = int((lasPnts.m_vec3d.y - refLasHeader.min_y) / heightPer);
-				if (inMemory)
-					memcpy(dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints + pointsRect[heighIdx*widthNum + widtnIdx], &lasPnts, sizeof(LASPoint));
-				dataset->m_LASPointID[totallasPnts].rectangle_idx = heighIdx*widthNum + widtnIdx;
-				dataset->m_LASPointID[totallasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
-				pointsRect[heighIdx*widthNum + widtnIdx]++;
-				totallasPnts++;
-			}
-			alread_read += read_once;
-			read_once_max = min(read_once_max, int(refLasHeader.number_of_point_records - alread_read));
-		}
-
-#ifdef  ANALYSIS
-		FILE* statisticLog = fopen("statistics.log", "w+");
-		for (int i = 0; i<widthNum; ++i)
-			for (int j = 0; j<heightNum; ++j)
-				fprintf(statisticLog, "%d %d %d\n", i, j, pointsRect[j*widthNum + i]);
-		fclose(statisticLog);
-#endif
-
+		int totalRead = 0;
+		LidarReader_RectPoints(m_lasFile, dataset, widthPer, heightPer, widthNum, heightNum, inMemory, skip, totalRead, pointsRect);
+		*/
+		int totalRead = 0;
+		LidarReader_RectPoints(m_lasFile, dataset, widthPer, heightPer, widthNum, heightNum, inMemory, skip, totalLasNumber);
 	}
 	catch (bad_alloc &e)
 	{
@@ -189,11 +124,7 @@ long LidarMemReader::LidarReader_Read(bool inMemory, int skip, ILASDataset* data
 	dataset->LASDataset_Trim(inMemory);
 	if (pointsRect != NULL)
 		delete[]pointsRect;
-	if (readOnce != NULL)
-		delete[]readOnce;
-
 	pointsRect = NULL;
-	readOnce = NULL;
 
 	return 0;
 }
@@ -207,38 +138,36 @@ long LidarMemReader::LidarReader_Write(const char *pathLidar, ILASDataset* datas
 		printf("no las data\n");
 		exit(-1);
 	}
-	//ï¿½Â½ï¿½Ò»ï¿½ï¿½LASHeader
+	//ĞÂ½¨Ò»¸öLASHeader
 	LASHeader &refHeader = dataset->m_lasHeader;
-
 	LASHeader lasHeader(refHeader);
-	lasHeader.max_x = dataset->m_lasRectangles[0].m_lasPoints[0].m_vec3d.x;
-	lasHeader.min_x = dataset->m_lasRectangles[0].m_lasPoints[0].m_vec3d.x;
-	lasHeader.max_y = dataset->m_lasRectangles[0].m_lasPoints[0].m_vec3d.y;
-	lasHeader.min_y = dataset->m_lasRectangles[0].m_lasPoints[0].m_vec3d.y;
-	lasHeader.max_z = dataset->m_lasRectangles[0].m_lasPoints[0].m_vec3d.z;
-	lasHeader.min_z = dataset->m_lasRectangles[0].m_lasPoints[0].m_vec3d.z;
 	int totalPoints = 0;
 
+	//Ğ´Êı¾İÖ®Ç°ÖØĞÂ¼ì²éÒ»ÏÂÒÔÃâ³öÏÖ²»Ò»ÖÂµÄÏÖÏó
 	for (size_t i = 0; i < dataset->m_numRectangles; i++)
 	{
 		for (size_t j = 0; j < dataset->m_lasRectangles[i].m_lasPoints_numbers; ++j)
 		{
 			lasHeader.max_x = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.max_x);
-			lasHeader.min_x = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.max_x);
+			lasHeader.min_x = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.min_x);
 			lasHeader.max_y = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.max_y);
-			lasHeader.min_y = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.max_y);
+			lasHeader.min_y = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.min_y);
 			lasHeader.max_z = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.max_z);
-			lasHeader.min_z = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.max_z);
+			lasHeader.min_z = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.min_z);
 		}
 		totalPoints += dataset->m_lasRectangles[i].m_lasPoints_numbers;
 	}
+	lasHeader.number_of_point_records = totalPoints;
+	lasHeader.point_data_record_length = 34;
+	lasHeader.point_data_format = 3;
+	lasHeader.version_major = 1;
+	lasHeader.version_minor = 2;
 	FILE* fLasOut = fopen(pathLidar, "wb");
 	if (fLasOut == nullptr)
 		return -1;
-
-	lasHeader.number_of_point_records = totalPoints;
 	lasHeader.WriteHeader(fLasOut);
-	//ï¿½Ğ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Öªï¿½ï¿½ï¿½ï¿½Ã´ï¿½ï¿½ ï¿½ä³¤ï¿½Ö¶Î»ï¿½Ã»ï¿½Ğ½ï¿½ï¿½Ğ´ï¿½ï¿½ï¿½
+
+	//ÖĞ¼äÓĞÎÊÌâ ²»ÖªµÀÔõÃ´¸ã ±ä³¤×Ö¶Î»¹Ã»ÓĞ½øĞĞ´¦Àí
 	int sizeBuff = lasHeader.offset_to_point_data - sizeof(LASHeader);
 	if (sizeBuff != 0)
 	{
@@ -247,14 +176,170 @@ long LidarMemReader::LidarReader_Write(const char *pathLidar, ILASDataset* datas
 		fwrite(buffer, 1, sizeBuff, fLasOut);
 		delete[]buffer; buffer = NULL;
 	}
+
+	//Ğ´Êı¾İ
+	for (int k = 0; k<dataset->m_totalReadLasNumber; ++k)
+	{
+		int i = dataset->m_LASPointID[k].rectangle_idx;
+		int j = dataset->m_LASPointID[k].point_idx_inRect;
+
+		int x = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x - lasHeader.x_offset) / lasHeader.x_scale_factor;
+		int y = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y - lasHeader.y_offset) / lasHeader.y_scale_factor;
+		int z = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z - lasHeader.z_offset) / lasHeader.z_scale_factor;
+		fwrite(&x, sizeof(int), 1, fLasOut);
+		fwrite(&y, sizeof(int), 1, fLasOut);
+		fwrite(&z, sizeof(int), 1, fLasOut);
+
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_intensity, sizeof(unsigned short), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_rnseByte, sizeof(unsigned char), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_classify, sizeof(unsigned char), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_scanAngle, sizeof(unsigned char), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_userdata, sizeof(unsigned char), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_flightID, sizeof(unsigned short), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_gpsTime, sizeof(double), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_colorExt, sizeof(LASColorExt), 1, fLasOut);
+	}
+	fclose(fLasOut);
+	return 0;
+}
+
+long LidarMemReader::LidarReader_Write(const char* pathLidar, ILASDataset* dataset, eLASClassification classType)
+{
+	assert(dataset != nullptr);
+
+	if (dataset->m_lasRectangles == nullptr)
+	{
+		printf("no las data\n");
+		exit(-1);
+	}
+	//ĞÂ½¨Ò»¸öLASHeader
+	LASHeader &refHeader = dataset->m_lasHeader;
+
+	LASHeader lasHeader(refHeader);
+	int totalPoints = 0;
+
+	for (size_t i = 0; i < dataset->m_numRectangles; i++)
+	{
+		for (size_t j = 0; j < dataset->m_lasRectangles[i].m_lasPoints_numbers; ++j)
+		{
+			if (dataset->m_lasRectangles[i].m_lasPoints[j].m_classify == classType)
+			{
+				lasHeader.max_x = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.max_x);
+				lasHeader.min_x = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.min_x);
+				lasHeader.max_y = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.max_y);
+				lasHeader.min_y = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.min_y);
+				lasHeader.max_z = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.max_z);
+				lasHeader.min_z = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.min_z);
+				++totalPoints;
+			}
+		}
+	}
+	lasHeader.number_of_point_records = totalPoints;
+	lasHeader.point_data_record_length = 34;
+	lasHeader.point_data_format = 3;
+	FILE* fLasOut = fopen(pathLidar, "wb");
+	if (fLasOut == nullptr)
+		return -1;
+	lasHeader.number_of_point_records = totalPoints;
+	lasHeader.version_major = 1;
+	lasHeader.version_minor = 2;
+	lasHeader.WriteHeader(fLasOut);
+	//ÖĞ¼äÓĞÎÊÌâ ²»ÖªµÀÔõÃ´¸ã ±ä³¤×Ö¶Î»¹Ã»ÓĞ½øĞĞ´¦Àí
+	int sizeBuff = lasHeader.offset_to_point_data - sizeof(LASHeader);
+	if (sizeBuff != 0)
+	{
+		char* buffer = new char[sizeBuff];
+		memset(buffer, 0, sizeof(char) * sizeBuff);
+		fwrite(buffer, 1, sizeBuff, fLasOut);
+		delete[]buffer; buffer = NULL;
+	}
+
+	for (int k = 0; k<dataset->m_totalReadLasNumber; ++k)
+	{
+		int i = dataset->m_LASPointID[k].rectangle_idx;
+		int j = dataset->m_LASPointID[k].point_idx_inRect;
+		if (dataset->m_lasRectangles[i].m_lasPoints[j].m_classify == classType)
+		{
+			int x = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x - lasHeader.x_offset) / lasHeader.x_scale_factor;
+			int y = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y - lasHeader.y_offset)/ lasHeader.y_scale_factor;
+			int z = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z - lasHeader.z_offset) / lasHeader.z_scale_factor;
+			
+			fwrite(&x, sizeof(int), 1, fLasOut);
+			fwrite(&y, sizeof(int), 1, fLasOut);
+			fwrite(&z, sizeof(int), 1, fLasOut);
+
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_intensity, sizeof(unsigned short), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_rnseByte, sizeof(unsigned char), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_classify, sizeof(unsigned char), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_scanAngle, sizeof(unsigned char), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_userdata, sizeof(unsigned char), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_flightID, sizeof(unsigned short), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_gpsTime, sizeof(double), 1, fLasOut);
+			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_colorExt, sizeof(LASColorExt), 1, fLasOut);
+		}
+	}
+	fclose(fLasOut);
+	return 0;
+}
+
+long LidarMemReader::LidarReader_WriteWithColor(const char* pathLidar, ILASDataset* dataset, LASColorExt color)
+{
+	assert(dataset != nullptr);
+
+	if (dataset->m_lasRectangles == nullptr)
+	{
+		printf("no las data\n");
+		exit(-1);
+	}
+	//ĞÂ½¨Ò»¸öLASHeader
+	LASHeader &refHeader = dataset->m_lasHeader;
+
+	LASHeader lasHeader(refHeader);
+	int totalPoints = 0;
+
+	for (size_t i = 0; i < dataset->m_numRectangles; i++)
+	{
+		for (size_t j = 0; j < dataset->m_lasRectangles[i].m_lasPoints_numbers; ++j)
+		{
+			lasHeader.max_x = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.max_x);
+			lasHeader.min_x = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x, lasHeader.min_x);
+			lasHeader.max_y = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.max_y);
+			lasHeader.min_y = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y, lasHeader.min_y);
+			lasHeader.max_z = max(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.max_z);
+			lasHeader.min_z = min(dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z, lasHeader.min_z);
+		}
+		totalPoints += dataset->m_lasRectangles[i].m_lasPoints_numbers;
+	}
+	FILE* fLasOut = fopen(pathLidar, "wb");
+	if (fLasOut == nullptr)
+		return -1;
 	bool isGpsTime = lasHeader.HasGPSTime(), isColorEx = lasHeader.HasLASColorExt6();
+	if (!isColorEx)
+	{
+		lasHeader.point_data_record_length += 6;
+		lasHeader.point_data_format = 3;
+		isColorEx = true;
+	}
+	lasHeader.number_of_point_records = totalPoints;
+	lasHeader.version_major = 1;
+	lasHeader.version_minor = 2;
+	lasHeader.WriteHeader(fLasOut);
+	//ÖĞ¼äÓĞÎÊÌâ ²»ÖªµÀÔõÃ´¸ã ±ä³¤×Ö¶Î»¹Ã»ÓĞ½øĞĞ´¦Àí
+	int sizeBuff = lasHeader.offset_to_point_data - sizeof(LASHeader);
+	if (sizeBuff != 0)
+	{
+		char* buffer = new char[sizeBuff];
+		memset(buffer, 0, sizeof(char) * sizeBuff);
+		fwrite(buffer, 1, sizeBuff, fLasOut);
+		delete[]buffer; buffer = NULL;
+	}
 
 	for (int k = 0; k<dataset->m_totalReadLasNumber; ++k)
 	{
 		int i = dataset->m_LASPointID[k].rectangle_idx;
 		int j = dataset->m_LASPointID[k].point_idx_inRect;
 
-		int x = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x- lasHeader.x_offset) / lasHeader.x_scale_factor ;
+		int x = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x - lasHeader.x_offset) / lasHeader.x_scale_factor;
 		int y = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y - lasHeader.y_offset) / lasHeader.y_scale_factor;
 		int z = (dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z - lasHeader.z_offset) / lasHeader.z_scale_factor;
 		fwrite(&x, sizeof(int), 1, fLasOut);
@@ -269,10 +354,125 @@ long LidarMemReader::LidarReader_Write(const char *pathLidar, ILASDataset* datas
 		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_flightID, sizeof(unsigned short), 1, fLasOut);
 		if (isGpsTime)
 			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_gpsTime, sizeof(double), 1, fLasOut);
-		if (isColorEx)
-			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_colorExt, sizeof(LASColorExt), 1, fLasOut);
+		//if (isColorEx)
+		fwrite(&color, sizeof(LASColorExt), 1, fLasOut);
 	}
 	fclose(fLasOut);
+	return 0;
+}
+
+long LidarMemReader::LidarReader_ReadMerge(std::vector<string> lasFiles, _OUT_ ILASDataset* dataset)
+{
+	assert(dataset != nullptr);
+	int pointDataRecord = 20;
+	int totalRecordPointNumber = 0;
+	//file header
+	LASHeader &refHeader = dataset->m_lasHeader;
+	for (int i = 0; i < lasFiles.size(); ++i)
+	{
+		FILE* fs = fopen(lasFiles[i].c_str(), "rb");
+		LASHeader tmpHeader;
+		tmpHeader.ReadHeader(fs);
+		refHeader.max_x = max(tmpHeader.max_x, refHeader.max_x);
+		refHeader.max_y = max(tmpHeader.max_y, refHeader.max_y);
+		refHeader.max_z = max(tmpHeader.max_z, refHeader.max_z);
+		refHeader.min_x = min(tmpHeader.min_x, refHeader.min_x);
+		refHeader.min_y = min(tmpHeader.min_y, refHeader.min_y);
+		refHeader.min_z = min(tmpHeader.min_z, refHeader.min_z);
+		totalRecordPointNumber += tmpHeader.number_of_point_records;
+		fclose(fs);
+	}
+
+	//¹¹½¨Ê÷½á¹¹
+	int *pointsRect = NULL;
+	double width = (refHeader.max_x - refHeader.min_x);
+	double height = (refHeader.max_y - refHeader.min_y);
+	double scaleWH = width / height;
+	double sqrt_2 = (sqrt(double(totalRecordPointNumber) / double(BlockPointNumbers) / scaleWH));
+	//Ã¿¸ö¿éµÄ´óĞ¡
+	double widthPer = width / sqrt_2 + 0.5;;
+	double heightPer = height / sqrt_2 + 0.5;;
+	int widthNum = ceil(width / widthPer);
+	int heightNum = ceil(height / heightPer);
+	dataset->LASDataset_AllocateMemory(widthNum*heightNum);
+	dataset->m_LASPointID = new LASIndex[totalRecordPointNumber];
+	//¹¹½¨RÊ÷½á¹¹
+	for (int i = 0; i < widthNum; ++i)
+	{
+		for (int j = 0; j < heightNum; ++j)
+		{
+			dataset->m_lasRectangles[j*widthNum + i].m_Rectangle.Set(i*widthPer + refHeader.min_x,
+				j*heightPer + refHeader.min_y,
+				(i + 1)*widthPer + refHeader.min_x,
+				(j + 1)*heightPer + refHeader.min_y);
+		}
+	}
+
+
+	//pointsRect = new int[widthNum*heightNum];
+	//memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
+	//for (int i = 0; i < lasFiles.size(); ++i)
+	//{
+	//	FILE* fs = fopen(lasFiles[i].c_str(), "rb");
+	//	LASHeader tmpHeader;
+	//	tmpHeader.ReadHeader(fs);
+	//	fseek(fs, tmpHeader.offset_to_point_data, SEEK_SET);
+	//	pointDataRecord = tmpHeader.point_data_record_length;
+
+	//	// Ö÷ÒªÊÇÎªÁË½â¾ö²»Í¬Êı¾İ¼¯²»¹æ·¶ÒıÆğµÄÎÊÌâ£¨ÏÂÍ¬£©
+	//	dataset->m_lasHeader.point_data_record_length = pointDataRecord;
+	//	dataset->m_lasHeader.number_of_point_records = tmpHeader.number_of_point_records;
+	//	dataset->m_lasHeader.x_offset = tmpHeader.x_offset;
+	//	dataset->m_lasHeader.y_offset = tmpHeader.y_offset;
+	//	dataset->m_lasHeader.z_offset = tmpHeader.z_offset;
+	//	dataset->m_lasHeader.x_scale_factor = tmpHeader.x_scale_factor;
+	//	dataset->m_lasHeader.y_scale_factor = tmpHeader.y_scale_factor;
+	//	dataset->m_lasHeader.z_scale_factor = tmpHeader.z_scale_factor;
+	//	LidarReader_RectNumbers(fs, dataset, widthPer, heightPer, widthNum, heightNum, 1, pointsRect);
+	//	fclose(fs);
+	//}
+
+	//for (int j = 0; j < widthNum*heightNum; ++j)
+	//	dataset->m_lasRectangles[j].LASRect_AllocateMemory(pointsRect[j], true, dataset->m_lasRectangles[j].m_Rectangle);
+	//memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
+	
+	dataset->m_LASPointID = new LASIndex[totalRecordPointNumber];
+	int totalRead = 0;
+
+	for (int i = 0; i < lasFiles.size(); ++i)
+	{
+		FILE* fs = fopen(lasFiles[i].c_str(), "rb");
+		LASHeader tmpHeader;
+		tmpHeader.ReadHeader(fs);
+		fseek(fs, tmpHeader.offset_to_point_data, SEEK_SET);
+		pointDataRecord = tmpHeader.point_data_record_length;
+
+		// Ö÷ÒªÊÇÎªÁË½â¾ö²»Í¬Êı¾İ¼¯²»¹æ·¶ÒıÆğµÄÎÊÌâ£¨ÏÂÍ¬£©
+		dataset->m_lasHeader.point_data_record_length = pointDataRecord;
+		dataset->m_lasHeader.number_of_point_records = tmpHeader.number_of_point_records;
+		dataset->m_lasHeader.x_offset = tmpHeader.x_offset;
+		dataset->m_lasHeader.y_offset = tmpHeader.y_offset;
+		dataset->m_lasHeader.z_offset = tmpHeader.z_offset;
+		dataset->m_lasHeader.x_scale_factor = tmpHeader.x_scale_factor;
+		dataset->m_lasHeader.y_scale_factor = tmpHeader.y_scale_factor;
+		dataset->m_lasHeader.z_scale_factor = tmpHeader.z_scale_factor;
+		LidarReader_RectPoints(fs, dataset, widthPer, heightPer, widthNum, heightNum, true,1, totalRead);
+		fclose(fs);
+	}
+	dataset->m_lasHeader.number_of_point_records = totalRecordPointNumber;
+	dataset->m_totalReadLasNumber = totalRecordPointNumber;
+	dataset->m_lasHeader.point_data_record_length = 34;
+	dataset->m_lasHeader.x_offset = 0;
+	dataset->m_lasHeader.y_offset = 0;
+	dataset->m_lasHeader.z_offset = 0;
+	dataset->m_lasHeader.x_scale_factor = 0.01;
+	dataset->m_lasHeader.y_scale_factor = 0.01;
+	dataset->m_lasHeader.z_scale_factor = 0.01;
+	dataset->LASDataset_Trim(true);
+	if (pointsRect != NULL)
+		delete[]pointsRect;
+	pointsRect = NULL;
+
 	return 0;
 }
 
@@ -287,6 +487,7 @@ long LidarMemReader::LidarReader_Export(const char* pathLidar, ILASDataset* data
 	{
 		color = true;
 	}
+	color = true;
 	for (int k = 0; k<dataset->m_totalReadLasNumber; ++k)
 	{
 		int i = dataset->m_LASPointID[k].rectangle_idx;
@@ -304,12 +505,14 @@ long LidarMemReader::LidarReader_Export(const char* pathLidar, ILASDataset* data
 					g = dataset->m_lasRectangles[i].m_lasPoints[j].m_colorExt.Green,
 					b = dataset->m_lasRectangles[i].m_lasPoints[j].m_colorExt.Blue;
 				fprintf(fw, "%8.4lf  %8.4lf  %8.4lf  %d  %d %d\n", x, y, z, r, g, b);
+				//printf("%8.4lf  %8.4lf  %8.4lf  %d  %d %d\n", x, y, z, r, g, b);
 			}
 			else {
 				double x = dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.x,
 					y = dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.y,
 					z = dataset->m_lasRectangles[i].m_lasPoints[j].m_vec3d.z;
 				fprintf(fw, "%8.4lf  %8.4lf  %8.4lf\n", x, y, z);
+				//printf("%8.4lf  %8.4lf  %8.4lf\n", x, y, z);
 			}
 		}
 	}
@@ -317,10 +520,158 @@ long LidarMemReader::LidarReader_Export(const char* pathLidar, ILASDataset* data
 	return 0;
 }
 
+long LidarMemReader::LidarReader_RectNumbers(FILE* fs, ILASDataset* dataset, double widthPre, double heightPre,
+	int widthNum, int heightNum,int skip, _OUT_ int *numPtsRect)
+{
+	LASHeader &refLasHeader = dataset->m_lasHeader;
+	int read_once_max = BlockPointNumbers;
+	int read_once = refLasHeader.number_of_point_records;
+	long bytelen = read_once_max * refLasHeader.point_data_record_length;
+
+	unsigned char *readOnce = new unsigned char[bytelen];
+	int totalLasNumber = 0;
+	int alread_read = 0;
+	while (alread_read<refLasHeader.number_of_point_records)
+	{
+		if (read_once>read_once_max)
+			read_once = read_once_max;
+		int readLen = read_once * refLasHeader.point_data_record_length;
+		fread(readOnce, readLen, 1, fs);
+
+		//ÏÈ¶ÁÈ¡£¬È»ºó½øĞĞ´¦Àí
+		for (size_t i = 0; i < read_once; i += skip)
+		{
+			Point3D vex;
+			const unsigned char* data = readOnce + i * refLasHeader.point_data_record_length;
+			int size = sizeof(int);
+			int x, y, z;
+			memcpy(&x, data, size); memcpy(&y, data + size, size); memcpy(&z, data + size * 2, size);
+			vex.x = x * refLasHeader.x_scale_factor + refLasHeader.x_offset;
+			vex.y = y * refLasHeader.y_scale_factor + refLasHeader.y_offset;
+			vex.z = z * refLasHeader.z_scale_factor + refLasHeader.z_offset;
+
+			dataset->m_xrange[0] = max(dataset->m_xrange[0], vex.x); dataset->m_xrange[1] = min(dataset->m_xrange[1], vex.x);
+			dataset->m_yrange[0] = max(dataset->m_yrange[0], vex.y); dataset->m_yrange[1] = min(dataset->m_yrange[1], vex.y);
+			dataset->m_zrange[0] = max(dataset->m_zrange[0], vex.z); dataset->m_zrange[1] = min(dataset->m_zrange[1], vex.z);
+
+			int widtnIdx = int((vex.x - refLasHeader.min_x) / widthPre);
+			int heighIdx = int((vex.y - refLasHeader.min_y) / heightPre);
+			if (widtnIdx < 0 || heighIdx < 0||widtnIdx>widthNum||heighIdx>heightNum)
+				return -1;
+			//¼ÆËãÃ»Ò»¸öRectÖĞÓĞ¶àÉÙ¸öµã
+			numPtsRect[heighIdx*widthNum + widtnIdx]++;
+			totalLasNumber++;
+		}
+		alread_read += read_once;
+		read_once_max = min(read_once_max, int(refLasHeader.number_of_point_records - alread_read));
+	}
+	delete[]readOnce; readOnce = nullptr;
+	return 0;
+}
+
+long LidarMemReader::LidarReader_RectPoints(FILE* fs, ILASDataset* dataset, double widthPre, double heightPre,
+	int widthNum, int heightNum, bool inMemory, int skip, int &totallasPnts, _OUT_ int *pointsRect)
+{
+	LASHeader &refLasHeader = dataset->m_lasHeader;
+	int read_once_max = BlockPointNumbers;
+	int read_once = refLasHeader.number_of_point_records;
+	long bytelen = read_once_max * refLasHeader.point_data_record_length;
+
+	unsigned char *readOnce = new unsigned char[bytelen];
+	int totalLasNumber = 0;
+	int alread_read = 0;
+
+	while (alread_read<refLasHeader.number_of_point_records)
+	{
+		if (read_once>read_once_max)
+			read_once = read_once_max;
+		int readLen = read_once * refLasHeader.point_data_record_length;
+		fread(readOnce, readLen, 1, fs);
+		//ÏÈ¶ÁÈ¡£¬È»ºó½øĞĞ´¦Àí
+		for (size_t i = 0; i < read_once; i += skip)
+		{
+			const unsigned char* data = readOnce + i * refLasHeader.point_data_record_length;
+			LASPoint lasPnts;
+			lasPnts.ExtractFromBuffer(data, refLasHeader);
+
+			int widtnIdx = int((lasPnts.m_vec3d.x - refLasHeader.min_x) / widthPre);
+			int heighIdx = int((lasPnts.m_vec3d.y - refLasHeader.min_y) / heightPre);
+			//ÓÃvectorµ¼ÖÂ¼æÈİĞÔÓĞÎÊÌâ
+			//if (inMemory)
+			//	memcpy(dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints + pointsRect[heighIdx*widthNum + widtnIdx], &lasPnts, sizeof(LASPoint));
+			dataset->m_LASPointID[totallasPnts].rectangle_idx = heighIdx * widthNum + widtnIdx;
+			dataset->m_LASPointID[totallasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
+			pointsRect[heighIdx*widthNum + widtnIdx]++;
+			totallasPnts++;
+		}
+		alread_read += read_once;
+		read_once_max = min(read_once_max, int(refLasHeader.number_of_point_records - alread_read));
+	}
+	delete[]readOnce; readOnce = nullptr;
+	return 0;
+}
+
+long LidarMemReader::LidarReader_RectPoints(FILE* fs, ILASDataset* dataset, double widthPre, double heightPre,
+	int widthNum, int heightNum, bool inMemory, int skip, int &totallasPnts)
+{
+	LASHeader &refLasHeader = dataset->m_lasHeader;
+	int read_once_max = BlockPointNumbers;
+	int read_once = refLasHeader.number_of_point_records;
+	long bytelen = read_once_max * refLasHeader.point_data_record_length;
+
+	//·´¸´ÉêÇëĞ¡ÄÚ´æ¿ÉÄÜ³öÏÖÄÚ´æËéÆ¬Ó°ÏìĞ§ÂÊĞèÒªÄÚ´æ³ØÓÅ»¯
+	//memory pool
+	unsigned char *readOnce = new unsigned char[bytelen];
+	int totalLasNumber = 0;
+	int alread_read = 0;
+
+	int *pointsRect = new int[widthNum*heightNum];
+	memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
+	totallasPnts = 0;
+	while (alread_read<refLasHeader.number_of_point_records)
+	{
+		if (read_once>read_once_max)
+			read_once = read_once_max;
+		int readLen = read_once * refLasHeader.point_data_record_length;
+		fread(readOnce, readLen, 1, fs);
+		//ÏÈ¶ÁÈ¡£¬È»ºó½øĞĞ´¦Àí
+		for (size_t i = 0; i < read_once; i += skip)
+		{
+			const unsigned char* data = readOnce + i * refLasHeader.point_data_record_length;
+			LASPoint lasPnts;
+			lasPnts.ExtractFromBuffer(data, refLasHeader);
+
+			int widtnIdx = int((lasPnts.m_vec3d.x - refLasHeader.min_x) / widthPre);
+			int heighIdx = int((lasPnts.m_vec3d.y - refLasHeader.min_y) / heightPre);
+			if (inMemory)
+				dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints.push_back(lasPnts);
+			dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints_numbers++;
+			dataset->m_LASPointID[totallasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
+			dataset->m_LASPointID[totallasPnts].rectangle_idx = heighIdx * widthNum + widtnIdx;
+			pointsRect[heighIdx*widthNum + widtnIdx]++;
+			totallasPnts++;
+		}
+		alread_read += read_once;
+		read_once_max = min(read_once_max, int(refLasHeader.number_of_point_records - alread_read));
+	}
+	for (size_t i = 0; i < widthNum*heightNum; ++i)
+	{
+		if (dataset->m_lasRectangles[i].m_lasPoints_numbers > 0)
+		{
+			dataset->m_lasRectangles[i].LASRectBuildTree();
+		}
+	}
+	delete[]pointsRect; pointsRect = nullptr;
+	delete[]readOnce; readOnce = nullptr;
+	return 0;
+}
+
+
+
 long LidarPatchReader::LidarReader_ReadHeader(FILE* lf, LASHeader &lasHeader)
 {
 	lasHeader.ReadHeader(lf);
-	//ï¿½ä³¤Í·
+	//±ä³¤Í·
 	for (int i = 0; i<lasHeader.number_of_variable_length_records; ++i)
 	{
 		LASVariableRecord variableRecord;
@@ -338,7 +689,7 @@ long LidarPatchReader::LidarReader_WriteHeader(FILE *lf, LASHeader lasHeader)
 	lasHeader.point_data_format = 3;
 	lasHeader.point_data_record_length = LASHeader::Data_Record_Length_of_Format3;
 	lasHeader.WriteHeader(lf);
-
+	//ÖĞ¼äÓĞÎÊÌâ ²»ÖªµÀÔõÃ´¸ã ±ä³¤×Ö¶Î»¹Ã»ÓĞ½øĞĞ´¦Àí
 	int sizeBuff = lasHeader.offset_to_point_data - sizeof(LASHeader);
 	if (sizeBuff != 0)
 	{
@@ -352,11 +703,14 @@ long LidarPatchReader::LidarReader_WriteHeader(FILE *lf, LASHeader lasHeader)
 
 Rect2D LidarPatchReader::LidarReader_ReadPatch(FILE *lf, LASHeader lasHeader, LASPoint *points, int &number)
 {
-	double dxMin = 99999999, dxMax = -9999999;
-	double dyMin = 99999999, dyMax = -9999999;
+	double dxMin = _MAX_LIMIT_, dxMax = _MIN_LIMIT_;
+	double dyMin = _MAX_LIMIT_, dyMax = _MIN_LIMIT_;
 
+	//ÀÁµÃÊÊÅäÖ±½Ó¶ÁÈ¡
 	int numreader = 0;
-	unsigned char* buffer = new unsigned char[lasHeader.point_data_record_length];
+	unsigned char buffer[34];
+	//int length = lasHeader.point_data_record_length;
+	//buffer = new unsigned char[length];
 	while (!feof(lf)&&numreader<number) {
 		fread(buffer, lasHeader.point_data_record_length, 1, lf);
 		points[numreader].ExtractFromBuffer(buffer, lasHeader);
@@ -369,7 +723,7 @@ Rect2D LidarPatchReader::LidarReader_ReadPatch(FILE *lf, LASHeader lasHeader, LA
 
 		++numreader;
 	};
-	delete[]buffer;
+	//delete[]buffer; buffer = nullptr;
 
 	Rect2D rect;
 	rect.minx = dxMin; rect.maxx = dxMax;
@@ -412,66 +766,130 @@ long LidarPatchReader::LidarReader_WritePatch(FILE* lf, LASHeader lasHeader, LAS
 	return 0;
 }
 
-long LidarPatchReader::LidarReader_SplitPatch(const char* pathLas,const char* pathSplitDir,int splitSize/*MB*/)
+/////////////////////////////////////////////////////////////////////////////
+long LidarReaderTxt::LidarReader_Open(const char* pathLidar, ILASDataset* dataset)
 {
-    ILASDataset *dataset = new ILASDataset();
-    LidarReader_Open(pathLas,dataset);
+	m_lasFile = fopen(pathLidar, "r+");
+	dataset->m_lasHeader.version_major = 1;
+	dataset->m_lasHeader.version_minor = 2;
+	dataset->m_lasHeader.point_data_record_length = 34;
+	dataset->m_lasHeader.point_data_format = 3;
+	dataset->m_lasHeader.file_signature[0] = 'L';
+	dataset->m_lasHeader.file_signature[1] = 'A';
+	dataset->m_lasHeader.file_signature[2] = 'S';
+	dataset->m_lasHeader.file_signature[3] = 'F';
+	return 0;
+}
 
-    const LASHeader &lasHeader = dataset->m_lasHeader;
-    int numPntRecord = lasHeader.number_of_point_records;
-    int numSplit     = splitSize*1024*1024/lasHeader.point_data_record_length;
-    int numPart      = ceil((double)numPntRecord/(double)numSplit);
-    int reserveNum   = numPntRecord;
-    fseek(m_lasFile, lasHeader.offset_to_point_data, SEEK_SET);
+long LidarReaderTxt::LidarReader_Read(bool inMemory, int skip, ILASDataset* dataset)
+{
+	//header and build tree
+	char line[2048];
+	int totalPointNumber = 0;
+	LASHeader &header = dataset->m_lasHeader;
+	header.max_x = header.max_y = header.max_z = _MIN_LIMIT_;
+	header.min_x = header.min_y = header.min_z = _MAX_LIMIT_;
+	
+	//first
+	while (!feof(m_lasFile))
+	{
+		fgets(line, 2048, m_lasFile);
+		double x, y, z;
+		int    r, g, b;
+		sscanf(line, "%lf%lf%lf%d%d%d", &x, &y, &z, &r, &g, &b);
+		header.max_x = max(header.max_x, x);
+		header.max_y = max(header.max_y, y);
+		header.max_z = max(header.max_z, z);
+		header.min_x = min(header.min_x, x);
+		header.min_y = min(header.min_y, y);
+		header.min_z = min(header.min_z, z);
+		totalPointNumber++;
+	};
+	header.point_data_record_length = 34;
+	header.number_of_point_records = totalPointNumber;
+	fseek(m_lasFile, 0, SEEK_SET);
+	double width = (header.max_x - header.min_x);
+	double height = (header.max_y - header.min_y);
+	double scaleWH = width / height;
+	double sqrt_2 = (sqrt(double(totalPointNumber) / double(BlockPointNumbers) / scaleWH));
+	//Ã¿¸ö¿éµÄ´óĞ¡
+	double widthPer = width / sqrt_2 + 0.5;;
+	double heightPer = height / sqrt_2 + 0.5;;
+	int widthNum = ceil(width / widthPer);
+	int heightNum = ceil(height / heightPer);
 
-    for(int i=0;i<numPart;++i)
-    {
-        string str(pathSplitDir);
-        char name[20];
-        sprintf(name,"%d.las",i);
-        string path = str+string("/")+string(name);
+	//·´ÕıÏÈÍ³¼ÆĞÅÏ¢
+	//·ÖÅäÄÚ´æ
+	dataset->LASDataset_AllocateMemory(widthNum*heightNum);
+	//¹¹½¨RÊ÷½á¹¹
+	for (int i = 0; i < widthNum; ++i)
+		for (int j = 0; j < heightNum; ++j)
+			dataset->m_lasRectangles[j*widthNum + i].m_Rectangle.Set(i*widthPer + header.min_x, j*heightPer + header.min_y, (i + 1)*widthPer + header.min_x, (j + 1)*heightPer + header.min_y);
 
-        int realNum=0;
-        if(numPart>numSplit)
-            realNum = numSplit;
-        else
-            realNum = numSplit;
+	dataset->LASDataset_BuildTree();
 
-        //read points
-        double dxMin = 99999999, dxMax = -9999999;
-        double dyMin = 99999999, dyMax = -9999999;
-        double dzMin = 99999999, dzMax = -9999999;
-        LASPoint* points = new LASPoint[realNum];
+	//Ã¿Ò»¸ö¾ØĞÎÇøÓòÖĞµÄµãµÄË÷Òı
+	//deleted by Frank.Wu
+	//ÒÔÇ°µÄÊ±ºòÎªÁËÊ¡ÄÚ´æÍ¨¹ıLASPoint* ½øĞĞ´æ´¢£¬Òò´ËĞèÒªÓĞÁ½±é±éÀú£¬
+	//µÚÒ»±éÏÈ»ñÈ¡µ½Ã¿¸öRectÄÚµÄµãµÄÊıÄ¿£¬È»ºóÉêÇëÄÚ´æ
+	//µÚ¶ş±é²ÅÄÜ¹»»ñÈ¡Ã¿¸öµã£¬ÏÖÔÚ²ÉÓÃvector¶¯Ì¬·ÖÅäÄÚ´æ£¬Ìá¸ß¶ÁÈ¡Ğ§ÂÊµ«ÊÇÄÚ´æÀûÓÃÂÊÏÂ½µÁË
+	//int *pointsRect = new int[widthNum*heightNum];
+	//memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
 
-        int numreader = 0;
-        unsigned char* buffer = new unsigned char[lasHeader.point_data_record_length];
-        for(int i=0;i<realNum;++i)
-        {
-            fread(buffer, lasHeader.point_data_record_length, 1, m_lasFile);
-            points[numreader].ExtractFromBuffer(buffer, lasHeader);
+	////second
+	//while (!feof(m_lasFile))
+	//{
+	//	fgets(line, 2048, m_lasFile);
+	//	double x, y, z;
+	//	int    r, g, b;
+	//	sscanf(line, "%lf%lf%lf%d%d%d", &x, &y, &z, &r, &g, &b);
+	//	dataset->m_xrange[0] = max(dataset->m_xrange[0],x); dataset->m_xrange[1] = min(dataset->m_xrange[1], x);
+	//	dataset->m_yrange[0] = max(dataset->m_yrange[0],y); dataset->m_yrange[1] = min(dataset->m_yrange[1], y);
+	//	dataset->m_zrange[0] = max(dataset->m_zrange[0],z); dataset->m_zrange[1] = min(dataset->m_zrange[1], z);
 
-            dxMin = min(points[numreader].m_vec3d.x, dxMin);
-            dxMax = max(points[numreader].m_vec3d.x, dxMax);
-            dyMin = min(points[numreader].m_vec3d.y, dyMin);
-            dyMax = max(points[numreader].m_vec3d.y, dyMax);
-            dzMin = min(points[numreader].m_vec3d.z, dzMin);
-            dzMax = max(points[numreader].m_vec3d.z, dzMax);
-        }
-        delete[]buffer;buffer= nullptr;
+	//	int widtnIdx = int((x - header.min_x) / widthPer);
+	//	int heighIdx = int((y - header.min_y) / heightPer);
+	//	if (widtnIdx < 0 || heighIdx < 0)
+	//		return -1;
+	//	//¼ÆËãÃ»Ò»¸öRectÖĞÓĞ¶àÉÙ¸öµã
+	//	pointsRect[heighIdx*widthNum + widtnIdx]++;
+	//};
+	//fseek(m_lasFile, 0, SEEK_SET);
+	//for (int j = 0; j < widthNum*heightNum; ++j)
+	//	dataset->m_lasRectangles[j].LASRect_AllocateMemory(pointsRect[j], inMemory, dataset->m_lasRectangles[j].m_Rectangle);
+	
+	dataset->m_LASPointID = new LASIndex[totalPointNumber];
+	dataset->m_totalReadLasNumber = totalPointNumber;
+	int totallasPnts = 0;
+	int *pointsRect = new int[widthNum*heightNum];
+	memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
+	while (!feof(m_lasFile))
+	{
+		fgets(line, 2048, m_lasFile);
+		double x, y, z;
+		int    r, g, b;
+		sscanf(line, "%lf%lf%lf%d%d%d", &x, &y,&z, &r, &g, &b);
+		LASPoint lasPnts;
+		lasPnts.m_classify = 1;
+		lasPnts.m_colorExt.Red = r; lasPnts.m_colorExt.Green = g; lasPnts.m_colorExt.Blue = b;
+		lasPnts.m_vec3d.x = x; lasPnts.m_vec3d.y = y; lasPnts.m_vec3d.z = z;
+		lasPnts.m_flightID = lasPnts.m_intensity = 0;
+		lasPnts.m_rnseByte = 0;
+		lasPnts.m_gpsTime = 0;
+		lasPnts.m_scanAngle = 0;
+		lasPnts.m_userdata = 0;
 
-        FILE* fs = fopen(path.c_str(),"wb");
-        //construct header
-        LASHeader splitHeader;
-        splitHeader.number_of_point_records=realNum;
-        splitHeader.min_x = dxMin;splitHeader.max_x=dxMax;
-        splitHeader.min_y = dyMin;splitHeader.max_y=dyMax;
-        splitHeader.min_z = dzMin;splitHeader.max_z=dzMax;
-
-        LidarReader_WriteHeader(fs,splitHeader);
-        LidarReader_WritePatch(fs,splitHeader,points,realNum);
-
-        fclose(fs);
-        delete[]points;points= nullptr;
-    }
-    delete dataset;
+		int widtnIdx = int((x - header.min_x) / widthPer);
+		int heighIdx = int((y - header.min_y) / heightPer);
+		if (widtnIdx < 0 || heighIdx < 0)
+			return -1;
+		if (inMemory)
+			dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints.push_back(lasPnts);
+		dataset->m_LASPointID[totallasPnts].rectangle_idx = heighIdx*widthNum + widtnIdx;
+		dataset->m_LASPointID[totallasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
+		pointsRect[heighIdx*widthNum + widtnIdx]++;
+		++totallasPnts;
+	};
+	delete[]pointsRect; pointsRect = nullptr;
+	return 0;
 }

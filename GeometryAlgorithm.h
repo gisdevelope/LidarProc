@@ -3,6 +3,7 @@
 #define _GEOMETRY_ALGORITHMS_H_
 
 #include "Geometry.h"
+using namespace GeometryLas;
 
 class  GeometryRelation
 {
@@ -65,11 +66,6 @@ public:
 	static bool IsRectIntersectSlantingRect(const Rect2D& rect, const Point2Ds& pts);
 	static bool IsRectIntersectSlantingRect(const Rect2D& rect, const Point2Ds& pts,
 		const Rect2D& slantingRect);
-
-	/*
-	* 判断点是否在多边形中
-	*/
-	//static 
 };
 
 /*距离计算函数*/

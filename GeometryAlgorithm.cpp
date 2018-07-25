@@ -1,8 +1,12 @@
-
-#include "GeometryAlgorithm.h"
-#include "tsmToUTM.h"
 #include <assert.h>
-#include "GeometryAlgorithm.h"
+#include <stdio.h>
+
+#include "../LidarAlgorithm/GeometryAlgorithm.h"
+#include "../LidarAlgorithm/GeometryAlgorithm.h"
+
+#include "../LidarBase/tsmToUTM.h"
+
+#pragma warning(disable:4996)
 
 static bool Is_Equal_Eps(double v1, double v2, double epsilon)
 {
@@ -359,24 +363,59 @@ bool GeometryRelation::IsRectIntersectSlantingRect(const Rect2D& rect, const Poi
 }
 bool GeometryRelation::IsRectIntersectRect(const Rect2D& rect1, const Rect2D& rect2)
 {
-	if (IsPointInRect(rect1.minx, rect1.miny, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
+	//判断矩形相交的代码有错误
+	//if (IsPointInRect(rect1.minx, rect1.miny, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect1.minx, rect1.maxy, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect1.maxx, rect1.miny, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect1.maxx, rect1.maxy, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect2.minx, rect2.miny, rect1.minx, rect1.miny, rect1.maxx, rect1.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect2.minx, rect2.maxy, rect1.minx, rect1.miny, rect1.maxx, rect1.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect2.maxx, rect2.miny, rect1.minx, rect1.miny, rect1.maxx, rect1.maxy))
+	//{
+	//	return true;
+	//}
+	//else if (IsPointInRect(rect2.maxx, rect2.maxy, rect1.minx, rect1.miny, rect1.maxx, rect1.maxy))
+	//{
+	//	return true;
+	//}
+	//else
+	//	return false;
+
+	double  minx = max(rect1.minx, rect2.minx);
+	double 	miny = max(rect1.miny, rect2.miny);
+	double 	maxx = min(rect1.maxx, rect2.maxx);
+	double 	maxy = min(rect1.maxy, rect2.maxy);
+
+	if (minx > maxx || miny > maxy)
 	{
-		return true;
-	}
-	else if (IsPointInRect(rect1.minx, rect1.maxy, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
-	{
-		return true;
-	}
-	else if (IsPointInRect(rect1.maxx, rect1.miny, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
-	{
-		return true;
-	}
-	else if (IsPointInRect(rect1.maxx, rect1.maxy, rect2.minx, rect2.miny, rect2.maxx, rect2.maxy))
-	{
-		return true;
+//#ifdef _DEBUG
+//		FILE* ofs = fopen("E:\\rect.txt", "a+");
+//		fprintf(ofs, "%lf,%lf,%lf,%lf;%lf,%lf,%lf,%lf;\n", rect1.minx, rect1.miny, rect1.maxx, rect1.maxy,
+//			rect2.minx, rect2.miny, rect2.maxx, rect2.maxy);
+//		fclose(ofs);
+//#endif // DEBUG
+		return false;
 	}
 	else
-		return false;
+		return true;
 
 }
 

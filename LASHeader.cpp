@@ -9,7 +9,7 @@
 #pragma warning(disable:4996)
 const unsigned short LASHeader::Data_Record_Length_of_Format0 = 20;
 const unsigned short LASHeader::Data_Record_Length_of_Format1 = 28;
-//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª1.2ï¿½ï¿½Ê½ï¿½ï¿½Ó¦ï¿½Äµï¿½ï¿½Ê½
+//ÒÔÏÂÁ½ÖÖÎª1.2¸ñÊ½¶ÔÓ¦µÄµã¸ñÊ½
 const unsigned short LASHeader::Data_Record_Length_of_Format2 = 26;
 const unsigned short LASHeader::Data_Record_Length_of_Format3 = 34;
 const unsigned short LASHeader::HeaderSize_Def = 227;
@@ -18,7 +18,7 @@ const unsigned short LASHeader::HeaderSize_Def = 227;
 // const char LASHeader::ErrorOffsettoData[] = "number of bytes of Variable Length Record is more than LasFileHead.Offset_to_data";
 
 /*****************************************************************************
-* @brief : LASï¿½Ä¼ï¿½Í·ï¿½Ä¼ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½
+* @brief : LASÎÄ¼þÍ·ÎÄ¼þ¶ÁÐ´²Ù×÷
 * @author : W.W.Frank
 * @date : 2015/11/29 18:18
 * @version : version 1.0
@@ -27,7 +27,7 @@ const unsigned short LASHeader::HeaderSize_Def = 227;
 *****************************************************************************/
 LASHeader::LASHeader()
 {
-	const char tmp[] = "0000";
+	const char tmp[] = "LASF";
 	for (int i = 0; i < 4; i++)
 		file_signature[i] = tmp[i];
 	//strcpy_s(file_signature,"LASF");
@@ -38,22 +38,21 @@ LASHeader::LASHeader()
 	project_ID_GUID_data_3 = 0;
 	memset(project_ID_GUID_data_4, 0, 8);
 	version_major = 1;
-	version_minor = 0;
-
+	version_minor = 2;
 	memset(system_id, 0, 32);
 	strcpy(generating_software, "LidarLab");
 
 	memset(generating_software, 0, 32);
-	strcpy(generating_software, "RAMS"); // ï¿½ï¿½Õ¹Colorï¿½ï¿½ï¿½ï¿½ï¿½Ðºï¿½ï¿½ï¿½ï¿½generating_softwareï¿½ï¿½ï¿½ï¿½RAMSï¿½ï¿½ï¿½ï¿½TerraSolidï¿½ï¿½È¡ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½
+	strcpy(generating_software, "RAMS"); // À©Õ¹Colorµ½µãÖÐºó£¬Èç¹ûgenerating_software²»ÊÇRAMS£¬ÔòTerraSolid¶ÁÈ¡±ØÈ»³ö´í
 
 										 //DateTime dt = DateTime::Now();
 	file_creation_day = 1;
 	file_creation_year = 2015;
 
 	header_size = HeaderSize_Def;
-	offset_to_point_data = header_size + 2; // 1.0ï¿½æ±¾Í¨ï¿½ï¿½ï¿½Ú¿É±ä³¤ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½0xccddï¿½ï¿½1.1È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	offset_to_point_data = header_size + 2; // 1.0°æ±¾Í¨³£ÔÚ¿É±ä³¤¼ÇÂ¼ºóÓÐÒ»¸ö½áÊø·û0xccdd£¬1.1È¡ÏûÁËÕâ¸ö½áÊø·û
 	number_of_variable_length_records = 0;
-	point_data_format = 0;
+	point_data_format = 3;
 	point_data_record_length = Data_Record_Length_of_Format0;// + 4;
 	number_of_point_records = 0;
 
@@ -66,12 +65,12 @@ LASHeader::LASHeader()
 	x_offset = 0;
 	y_offset = 0;
 	z_offset = 0;
-	min_x = 0;
-	max_x = 0;
-	min_y = 0;
-	max_y = 0;
-	min_z = 0;
-	max_z = 0;
+	min_x = _MAX_LIMIT_;
+	max_x = _MIN_LIMIT_;
+	min_y = _MAX_LIMIT_;
+	max_y = _MIN_LIMIT_;
+	min_z = _MAX_LIMIT_;
+	max_z = _MIN_LIMIT_;
 }
 LASHeader::LASHeader(const LASHeader& header)
 {
@@ -107,6 +106,8 @@ bool LASHeader::HasGPSTime() const
 	{
 		if (point_data_format == 1)
 			return true;
+		else if (point_data_format == 3)
+			return true;
 		else
 			return false;
 	}
@@ -123,21 +124,19 @@ bool LASHeader::HasGPSTime() const
 bool LASHeader::HasLASColorExt4() const
 {
 	// color: 4 unsigned char
-	// lyf modified [20100522] ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½1.2ï¿½ï¿½Ê½ï¿½ï¿½Ö§ï¿½ï¿½
-	// ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç£ï¿½1ï¿½ï¿½1.0ï¿½ï¿½ï¿½ï¿½1.1ï¿½ï¿½Ê½ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½Ï¢(4ï¿½ï¿½ï¿½Ö½ï¿½)
-	// 2.1.2ï¿½ï¿½Ê½ï¿½Ô´ï¿½rgbï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«Öµ(3ï¿½ï¿½ï¿½Ö½ï¿½)
-	if (version_major == 1 && (version_minor == 0 || version_minor == 1))//1.0 1.1ï¿½ï¿½Ê½
+	// lyf modified [20100522] ¼ÓÈëÁË¶Ô1.2¸ñÊ½µÄÖ§³Ö
+	// ÕâÀïÒª·ÖÁ½ÖÖÇé¿ö¿¼ÂÇ£º1£¬1.0»òÕß1.1¸ñÊ½À©Õ¹°üº¬ÑÕÉ«ÐÅÏ¢(4¸ö×Ö½Ú)
+	// 2.1.2¸ñÊ½×Ô´ørgbÈý¸öÑÕÉ«Öµ(3¸ö×Ö½Ú)
+	if (version_major == 1 && (version_minor == 0 || version_minor == 1))//1.0 1.1¸ñÊ½
 	{
 		if (point_data_format == 0)
 			return point_data_record_length == Data_Record_Length_of_Format0 + 4 ? true : false;
 		else if (point_data_format == 1)
 			return point_data_record_length == Data_Record_Length_of_Format1 + 4 ? true : false;
-		else{
-			printf("format error!");
-            exit(0);
-        }
+		else if(point_data_format==3)
+			return  false;
 	}
-	else if (version_major == 1 && version_minor == 2)//1.2ï¿½ï¿½Ê½
+	else if (version_major == 1 && version_minor == 2)//1.2¸ñÊ½
 	{
 		if (point_data_format == 0)
 			return point_data_record_length == Data_Record_Length_of_Format0 + 4 ? true : false;
@@ -147,28 +146,30 @@ bool LASHeader::HasLASColorExt4() const
 			return point_data_record_length == Data_Record_Length_of_Format2 + 4 ? true : false;
 		else if (point_data_format == 3)
 			return point_data_record_length == Data_Record_Length_of_Format3 + 4 ? true : false;
-		else{
-            printf("format error!");
-            exit(0);
-        }
+		else
+			exit(0);
 	}
 	return false;
 }
 bool LASHeader::HasLASColorExt6() const
 {
-	if (version_major == 1 && version_minor == 2)
+	if (version_major == 1 && (version_minor == 0 || version_minor == 1))//1.0 1.1¸ñÊ½
 	{
-		if (point_data_format == 2 || point_data_format == 3)
-			return true;
-		else if (point_data_format == 0 || point_data_format == 1)
-			return false;
-		else{
-            printf("format error!");
-            exit(0);
-        }
+		if (point_data_format == 3)
+			return  true;
 	}
-	else
-		return false;
+	else if (version_major == 1 && version_minor == 2)//1.2¸ñÊ½
+	{
+		if (point_data_format == 0)
+			return point_data_record_length == Data_Record_Length_of_Format0 ? true : false;
+		else if (point_data_format == 1)
+			return point_data_record_length == Data_Record_Length_of_Format1 ? true : false;
+		else if (point_data_format == 2)
+			return point_data_record_length == Data_Record_Length_of_Format2 ? true : false;
+		else if (point_data_format == 3)
+			return point_data_record_length == Data_Record_Length_of_Format3 ? true : false;
+	}
+	return false;
 }
 int  LASHeader::HasLASPointExt() const
 {
@@ -177,36 +178,31 @@ int  LASHeader::HasLASPointExt() const
 		len = point_data_record_length - LASHeader::Data_Record_Length_of_Format0;
 	else if (point_data_format == 1)
 		len = point_data_record_length - LASHeader::Data_Record_Length_of_Format1;
-	// lyf modified [20100522] ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½1.2ï¿½ï¿½Ê½ï¿½ï¿½Ö§ï¿½ï¿½
+	// lyf modified [20100522] ¼ÓÈëÁË¶Ô1.2¸ñÊ½µÄÖ§³Ö
 	else if (point_data_format == 2)
 		len = point_data_record_length - LASHeader::Data_Record_Length_of_Format2;
 	else if (point_data_format == 3)
 		len = point_data_record_length - LASHeader::Data_Record_Length_of_Format3;
-	else{
-        printf("format error!");
-        exit(0);
-    }
+	else
+		exit(0);
 	if (len >= 0)
 		return len;
-	else{
-        printf("data point length error");
-        exit(0);
-    }
+	else
+		exit(1);
 }
 void LASHeader::ReadHeader(FILE *fs)
 {
-	//ï¿½ï¿½È¡ï¿½ï¿½×¼ï¿½Ä¼ï¿½Í·ï¿½ï¿½ï¿½ï¿½
-    //fread(this->file_signature,4,1,fs);
+	//¶ÁÈ¡±ê×¼ÎÄ¼þÍ·³¤¶È
 	fread((void*)(this), HeaderSize_Def, 1, fs);
 	strcpy(generating_software, "wuwei");
 
-	//ï¿½ï¿½È¡ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
+	//»ñÈ¡ÎÄ¼þ³¤¶È
 	int curPos = ftell(fs);
 	fseek(fs, 0, SEEK_END);
 	int size = ftell(fs);
 	fseek(fs, curPos, SEEK_SET);
 
-	// ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Í·ï¿½ï¿½Â¼ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	// ¿ÉÄÜÎÄ¼þÍ·¼ÇÂ¼µÄµãÊýÓëÊµ¼ÊµãÊý²»·û
 	unsigned int ptsCnt;
 	int len = size;
 	if ((unsigned int)len <= offset_to_point_data)
@@ -241,7 +237,7 @@ void LASHeader::WriteHeader(FILE *fs) const
 }
 
 /*****************************************************************************
-* @brief : LASï¿½ä³¤ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½
+* @brief : LAS±ä³¤Êý¾ÝÎÄ¼þ¶ÁÐ´²Ù×÷
 * @author : W.W.Frank
 * @date : 2015/11/29 19:33
 * @version : version 1.0

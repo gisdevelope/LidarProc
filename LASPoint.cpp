@@ -1,11 +1,10 @@
-
 //
 // Created by wuwei on 17-12-25.
 //
 
 #include "LASPoint.h"
 /**
-* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ï¿½
+* ´ÓÊäÈëÎÄ¼þÖÐ½âÎö³öµãÔÆ²ÎÊý
 * @param data
 * @param info
 */
@@ -19,17 +18,17 @@ void LASPoint::ExtractFromBuffer(const unsigned char* data, const LASHeader& inf
 	m_vec3d.z = xyz[2] * info.z_scale_factor + info.z_offset;
 	data += sizeof(int) * 3;
 
-	int size = sizeof(short)     //_intensity
+	int size = sizeof(short) //_intensity
 		+ sizeof(unsigned char)
 		+ sizeof(unsigned char)  // _classfication
-		+ sizeof(char)           // _scanAngleRank
+		+ sizeof(char)  // _scanAngleRank
 		+ sizeof(unsigned char)  // _userData
 		+ sizeof(unsigned short);// _pointSourceID
 
 	memcpy(&m_intensity, data, size);
 	data += size;
 
-	if (info.point_data_format == 1)
+	if (info.HasGPSTime())
 	{
 		size = sizeof(double);
 		memcpy(&m_gpsTime, data, size);
@@ -54,7 +53,6 @@ void LASPoint::ExtractFromBuffer(const unsigned char* data, const LASHeader& inf
 		memcpy(&m_colorExt,data,sizeof(LASColorExt));
 		data+=sizeof(LASColorExt);
 	}
-
 }
 
 void LASPoint::ExportToBuffer(unsigned char* data, const LASHeader& info) const
@@ -78,7 +76,7 @@ void LASPoint::ExportToBuffer(unsigned char* data, const LASHeader& info) const
 		+ sizeof(unsigned short);// _pointSourceID
 	memcpy(data, &m_intensity, size);
 	data += size;
-	if (info.point_data_format == 1) //ï¿½ï¿½GPSÊ±ï¿½ï¿½
+	if (info.point_data_format == 1) //ÓÐGPSÊ±¼ä
 	{
 		size = sizeof(double);
 		memcpy(data, &m_gpsTime, size);
@@ -93,7 +91,7 @@ void LASPoint::ExportToBuffer(unsigned char* data, const LASHeader& info) const
 }
 
 /*****************************************************************************
-* @brief : LASï¿½ï¿½ï¿½ï¿½LASï¿½ï¿½ï¿½Ý¼ï¿½
+* @brief : LAS¿éÓëLASÊý¾Ý¼¯
 * @author : W.W.Frank
 * @date : 2015/11/29 21:50
 * @version : version 1.0
@@ -103,10 +101,11 @@ void LASRectBlock::LASRect_AllocateMemory(int lasPoints, bool inMemory, Rect2D r
 	m_lasPoints_numbers = lasPoints;
 	try
 	{
-		if (inMemory)
-		{
-			m_lasPoints = new LASPoint[lasPoints];
-		}
+		//ÓÃvectorºó¶¯Ì¬·ÖÅäÄÚ´æ
+		//if (inMemory)
+		//{
+		//	m_lasPoints = new LASPoint[lasPoints];
+		//}
 		memcpy(&m_Rectangle, &rect, sizeof(Rect2D));
 	}
 	catch (bad_alloc &e)
@@ -116,6 +115,16 @@ void LASRectBlock::LASRect_AllocateMemory(int lasPoints, bool inMemory, Rect2D r
 	}
 }
 
+void LASRectBlock::LASRectBuildTree()
+{
+	if (m_lasPoints_numbers == 0)
+		return;
+	else
+	{
+		m_block_tree = new kd_tree_block(3, m_lasPoints, KDTreeSingleIndexAdaptorParams(10));
+		m_block_tree->buildIndex();
+	}
+}
 
 ILASDataset::ILASDataset()
 {
@@ -124,13 +133,13 @@ ILASDataset::ILASDataset()
 	m_numRectangles = 0;
 	m_LASPointID = NULL;
 	m_lasvarHeader = NULL;
-	m_xrange[0] = -99999999; m_xrange[1] = 99999999;
-	m_yrange[0] = -99999999; m_yrange[1] = 99999999;
-	m_zrange[0] = -99999999; m_zrange[1] = 99999999;
+	m_xrange[0] = _MIN_LIMIT_; m_xrange[1] = _MAX_LIMIT_;
+	m_yrange[0] = _MIN_LIMIT_; m_yrange[1] = _MAX_LIMIT_;
+	m_zrange[0] = _MIN_LIMIT_; m_zrange[1] = _MAX_LIMIT_;
 }
 ILASDataset::~ILASDataset()
 {
-	printf("destructor...\n");
+	printf("ÕýÔÚÊÍ·ÅÄÚ´æ...\n");
 	if (m_lasRectangles != NULL)
 		delete[]m_lasRectangles;
 	if (m_LASPointID != NULL)
@@ -140,7 +149,7 @@ ILASDataset::~ILASDataset()
 	m_lasBlockTree.RemoveAll();
 }
 
-//LASSet ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½ï¿½ï¿½
+//LASSet Êý¾Ý¼¯º¯Êý
 inline bool SearchRectCallback(int id, void* arg)
 {
 	vector<int> *rect = (vector<int>*)arg;
@@ -155,7 +164,7 @@ long ILASDataset::LASDataset_BuildTree()
 		printf("no data to build tree\n");
 		return -1;
 	}
-	//ï¿½ï¿½ï¿½ï¿½ï¿½Ý¹ï¿½ï¿½ï¿½Rï¿½ï¿½ï¿½á¹¹
+	//¶ÔÊý¾Ý¹¹½¨RÊ÷½á¹¹
 	for (int i = 0; i < m_numRectangles; ++i)
 	{
 		double minbound[] = { m_lasRectangles[i].m_Rectangle.minx,m_lasRectangles[i].m_Rectangle.miny };
@@ -182,7 +191,7 @@ void ILASDataset::LASDataset_AllocateMemory(int lasRects)
 
 void ILASDataset::LASDataset_Trim(bool inMemory)
 {
-	//ï¿½ï¿½È¡ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+	//»ñÈ¡Êý¾ÝµÄÖÐÐÄÎ»ÖÃ
 	if (inMemory)
 	{
 		Point3D pntLasSet;
@@ -208,6 +217,34 @@ void ILASDataset::LASDataset_Trim(bool inMemory)
 		}
 		memcpy(&m_SetCenter, &pntLasSet, sizeof(Point3D));
 	}
+}
+
+bool ILASDataset::LASDataset_FixHeader()
+{
+	if (m_lasHeader.point_data_record_length == LASHeader::Data_Record_Length_of_Format0)
+	{
+		m_lasHeader.version_major = 1;
+		m_lasHeader.version_minor = 0;
+	}
+	else if (m_lasHeader.point_data_record_length == LASHeader::Data_Record_Length_of_Format1)
+	{
+		m_lasHeader.version_major = 1;
+		m_lasHeader.version_minor = 1;
+	}
+	else if (m_lasHeader.point_data_record_length == LASHeader::Data_Record_Length_of_Format2)
+	{
+		m_lasHeader.version_major = 1;
+		m_lasHeader.version_minor = 2;
+	}
+	else if (m_lasHeader.point_data_record_length == LASHeader::Data_Record_Length_of_Format3)
+	{
+		m_lasHeader.version_major = 1;
+		m_lasHeader.version_minor = 2;
+	}
+	else {
+		return false;
+	}
+	return true;
 }
 
 //bool ILASDataset::LASDataset_Iterator(callback_operation_points_Ptr ptrFun)
@@ -255,13 +292,13 @@ bool ILASDataset::LASDataset_Search(int rectID, Point3D searchPnt, vector<int> &
 	}
 	return false;
 }
-//ï¿½ï¿½ï¿½ï¿½Ë³ï¿½Î´ï¿½ï¿½ï¿½ï¿½Òµï¿½ï¿½ï¿½Ó¦ï¿½Äµï¿½
+//¸ù¾ÝË³´Î´ÎÐòÕÒµ½¶ÔÓ¦µÄµã
 bool ILASDataset::LASDataset_Search(int pointID, Point3D &searchPnt)
 {
 	int pntBegIdz = 0, pntEndIdx = 0;
 	for (int i = 0; i < m_numRectangles; ++i)
 	{
-		//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½
+		//ÆðÊ¼ºÍÖÕÖ¹µãºÅ
 		pntBegIdz = pntEndIdx;
 		pntEndIdx += m_lasRectangles[i].m_lasPoints_numbers - 1;
 		if (pointID >= pntBegIdz&&pointID <= pntEndIdx)

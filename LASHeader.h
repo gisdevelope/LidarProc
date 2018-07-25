@@ -11,6 +11,14 @@
 #include <memory.h>
 using namespace std;
 
+#ifndef _MAX_LIMIT_
+#define _MAX_LIMIT_ 99999999
+#endif
+
+#ifndef _MIN_LIMIT_
+#define _MIN_LIMIT_ -99999999
+#endif
+
 // LAS头结构
 #pragma pack(1)
 class  LASHeader
@@ -30,7 +38,7 @@ public:												// 必须 说明		默认值	字节编号
 													* This data field is reserved and must be zero filled by generating generating_software.
 													* 1.0版las文件为4字节；1.1版为2字节，与上面的File_Source_ID合用4个字节
 													*/
-	unsigned int  reserved;						// -	保存使用	5-8		5-8
+	unsigned int  reserved;							// -	保存使用	5-8		5-8
 	unsigned int  project_ID_GUID_data_1;			// -	4字节		0		9-12
 	unsigned short project_ID_GUID_data_2;			// -	2字节		0		13-14
 	unsigned short project_ID_GUID_data_3;			// -	2字节		0		15-16
@@ -43,7 +51,7 @@ public:												// 必须 说明		默认值	字节编号
 	unsigned short file_creation_year;				// -						93-94
 	unsigned short header_size;						// *	Head大小			95-96
 	unsigned int offset_to_point_data;				// *	数据地址			97-100
-	unsigned int number_of_variable_length_records;// *	变长记录数目		101-104
+	unsigned int number_of_variable_length_records; // *	变长记录数目		101-104
 	unsigned char point_data_format;				// *	点数据格式GPS		105
 	unsigned short point_data_record_length;		// *	点数据长度			106-107
 	unsigned int number_of_point_records;			// *	点的数目			108-111
@@ -166,8 +174,8 @@ public:
 	LASVariable_header_geo_keys()
 	{
 		key_directory_version = 1;	// Always
-		key_revision = 1;	// Always
-		minor_revision = 0;	// Always
+		key_revision = 1;			// Always
+		minor_revision = 0;			// Always
 	}
 };
 class  LASVariable_header_key_entry

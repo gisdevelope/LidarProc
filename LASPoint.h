@@ -7,91 +7,36 @@
 #define LASLIB_LASPOINT_H
 #include <string>
 #include <functional>
-#include <dirent.h>
 
 #include "LASHeader.h"
-#include "Geometry.h"
-#include "RTree.hpp"
+#include "../LidarAlgorithm/Geometry.h"
+#include "../LidarAlgorithm/GeometryFlann.h"
+#include "../LidarBase/RTree.hpp"
+#include<io.h>
 
 using namespace std;
-
-#define LATLONGITUDE 1
-#define PROCESS_OUTPUT_SCREEN 1
-
-static void getFiles(string cate_dir,vector<string> &files,string ext)
-{
-#ifdef WIN32
-    _finddata_t file;
-    long lf;
-    if ((lf=_findfirst(cate_dir.c_str(), &file)) == -1) {
-        cout<<cate_dir<<" not found!!!"<<endl;
-    } else {
-        while(_findnext(lf, &file) == 0) {
-            //cout<<file.name<<endl;
-            if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0)
-                continue;
-            files.push_back(file.name);
-        }
-    }
-    _findclose(lf);
-#endif
-
-#ifdef linux
-    DIR *dir;
-    struct dirent *ptr;
-    char base[1000];
-
-    if ((dir=opendir(cate_dir.c_str())) == NULL)
-    {
-        perror("Open dir error...");
-        exit(1);
-    }
-
-    while ((ptr=readdir(dir)) != NULL)
-    {
-        if(strcmp(ptr->d_name,".")==0 || strcmp(ptr->d_name,"..")==0)    ///current dir OR parrent dir
-            continue;
-        else if(ptr->d_type == 8)    ///file
-		{
-			string name = string(ptr->d_name);
-			string::size_type pos=name.rfind('.');
-			string ext=name.substr(pos==string::npos?name.length():pos+1);
-
-			if( !strcmp("ext", ext.c_str() ))
-				files.push_back(string(cate_dir)+name);
-
-		}
-            //printf("d_name:%s/%s\n",basePath,ptr->d_name);
-        else if(ptr->d_type == 10)    ///link file
-            //printf("d_name:%s/%s\n",basePath,ptr->d_name);
-            continue;
-        else if(ptr->d_type == 4)    ///dir
-        {
-            files.push_back(string(ptr->d_name));
-            /*
-                memset(base,'\0',sizeof(base));
-                strcpy(base,basePath);
-                strcat(base,"/");
-                strcat(base,ptr->d_nSame);
-                readFileList(base);
-            */
-        }
-    }
-    closedir(dir);
-#endif
-    //?????????????????????
-    sort(files.begin(), files.end());
-}
-
+using namespace GeometryLas;
 //struct LASPoint;
 //typedef std::function<void(LASPoint*)> callback_operation_points_Ptr;
 
 static unsigned char GetReturnNumber(unsigned char temp) { return (temp & 0x07) ; /*0x00000111*/ }
 static unsigned char GetNumberOfReturns(unsigned char temp) { return (temp & 0x38) >> 3; /*00111000*/ }
 
-//??????????????????
+//待测试
 static bool GetScanDirectionFlag(unsigned char temp) { return ((temp & 0x02) >> 1) == 1 ? true : false; /*00000010*/ }
 static bool GetEdgeOfFlightLine(unsigned char temp) { return temp & 0x01;	/*00000001*/ }
+
+#ifndef _OUT_
+#define _OUT_
+#endif 
+
+#ifndef _IN_
+#define _IN_
+#endif
+
+#ifndef _INOUT_
+#define _INOUT_
+#endif
 
 #ifndef COLORREF
 #define COLORREF int
@@ -101,54 +46,16 @@ static bool GetEdgeOfFlightLine(unsigned char temp) { return temp & 0x01;	/*0000
 #define RGB(r,g,b)          ((COLORREF)(((unsigned char)(r)|((unsigned int)((unsigned char)(g))<<8))|(((unsigned int)(unsigned char)(b))<<16)))
 #endif
 
-typedef RTree<int, double, 2, double, 4>  LASBlockTree;
-
-/*?????????????????????????*/
-enum  eLASEcho
-{
-	eLidarEchoOnly = 0,
-	eLidarEchoFirst = 1,
-	eLidarEchoMidian = 2,
-	eLidarEchoLast = 3
-};
-/*???????????????????????*/
-#pragma pack(1)
-enum  eLASClassification
-{
-	elcCreated			 = 0,	//
-	elcUnclassified		 = 1,	//
-	elcGround			 = 2,	//
-	elcLowVegetation	 = 3,	//
-	elcMediumVegetation  = 4,	//
-	elcHighVegetation	 = 5,	//
-	elcBuilding			 = 6,	//
-	elcLowPoint			 = 7,	//
-	elcModelKeyPoint	 = 8,	//
-	elcWater			 = 9,	//
-	elcOverlapPoint		 = 12,	//
-	elcDanger			 = 13,	//
-	elcDangerLevel1		 = 14,	// 
-	elcDangerLevel2		 = 15,
-	elcDangerLevel3		 = 16,
-	//...ext
-	elcDangerEnd		 = 23,
-	elcFallingTree		 = 24,
-	elcFallingTreeLevel1 = 25,
-	elcFallingTreeLevel2 = 26,
-	elcFallingTreeLevel3 = 27,
-	//...ext
-	elcFallingTreeEnd	 = 29,
-
-	elcTowerRange		 = 30,	//
-	elcDeletedPoint		 = -1	// 
-};
-#pragma pack()
-
-static eLASClassification GetLidarClassification(unsigned char clsType)
-{
-	return (eLASClassification)clsType;
+#ifndef ExRGB
+#define ExRGB(color,extColor)							\
+{														\
+	extColor.Red = (color << 24) >> 24 & 0x000000ff;	\
+	extColor.Green = (color << 16) >> 24 & 0x000000ff;	\
+	extColor.Blue = (color << 8) >> 24 & 0x000000ff;	\
 }
-/*Las1.2????????*/
+#endif
+
+/*Las1.2颜色扩展*/
 #pragma pack(1)
 struct LASColorExt
 {
@@ -158,19 +65,19 @@ struct LASColorExt
 };
 #pragma pack()
 
-
-#pragma pack(1)
+//las点文件
+#pragma pack(1)/*字节对齐*/
 class LASPoint
 {
 public:
 	/*
-	* write & read
+	* 读写
 	*/
 	void Write(FILE *fs, const LASHeader& info) const;
 	void Read(FILE *fs, const LASHeader& info);
 
 	/**
-	* extract
+	* 内存中解析出单个的点云数据
 	* @param data
 	* @param info
 	*/
@@ -190,7 +97,98 @@ public:
 };
 #pragma pack()
 
-#pragma pack(1)/*????????????????*/
+
+/*
+	adaptor it's hard to adjust the 
+*/
+struct PointCloudBlockAdaptor
+{
+	std::vector<LASPoint> lasPoints;
+
+	//reload operator [] to keep the code with same format
+	inline void push_back(LASPoint pnt) { lasPoints.push_back(pnt); }
+
+	//reload operator [] to keep the code with same format
+	inline LASPoint &operator[](int i) { return lasPoints[i]; }
+
+	//clear data
+	inline void clear() { lasPoints.clear(); }
+
+	// must return the number of data points
+	//(for adatopr the function must be relized)
+	inline size_t kdtree_get_point_count() const { return lasPoints.size(); }
+
+	// Returns the dim'th component of the idx'th point in the class:
+	// Since this is inlined and the "dim" argument is typically an immediate value, the
+	//  "if/else's" are actually solved at compile time.
+	inline double kdtree_get_pt(const size_t idx, int dim) const
+	{
+		if (dim == 0) return lasPoints[idx].m_vec3d.x;
+		else if (dim == 1) return lasPoints[idx].m_vec3d.y;
+		else return lasPoints[idx].m_vec3d.z;
+	}
+
+	// Optional bounding-box computation: return false to default to a standard bbox computation loop.
+	//   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
+	//   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
+	template <class BBOX>
+	bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+};
+
+typedef RTree<int, double, 2, double, 4>  LASBlockTree;
+typedef PointCloudBlockAdaptor PCBlockAdaptor;
+typedef KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double, PCBlockAdaptor>, PCBlockAdaptor, 3> kd_tree_block;
+
+/*激光回波信号*/
+enum  eLASEcho
+{
+	eLidarEchoOnly = 0,
+	eLidarEchoFirst = 1,
+	eLidarEchoMidian = 2,
+	eLidarEchoLast = 3
+};
+/*点云的类别*/
+#pragma pack(1)
+enum  eLASClassification
+{
+	elcCreated			 = 0,	// 创建的，没有被分类的
+	elcUnclassified		 = 1,	// 无类别的，或无法识别类别的点
+	elcGround			 = 2,	// 地面点
+	elcLowVegetation	 = 3,	// 矮的植被
+	elcMediumVegetation  = 4,	// 中等高度的植被
+	elcHighVegetation	 = 5,	// 高的植被
+	elcBuilding			 = 6,	// 建筑物
+	elcLowPoint			 = 7,	// 低于地表的点（噪音）
+	elcModelKeyPoint	 = 8,	// 控制点
+	elcWater			 = 9,	// 水
+	elcOverlapPoint		 = 12,	// 航带重叠点
+
+	elcDanger			 = 13,	//
+	elcDangerLevel1		 = 14,	// 
+	elcDangerLevel2		 = 15,
+	elcDangerLevel3		 = 16,
+	//...ext
+	elcDangerEnd		 = 23,
+
+	elcTowerRange	 	 = 24,		// 
+	elcDriveWay			 = 25,      //公路
+
+	elcFallingTree		 = 30,
+	elcFallingTreeLevel1 = 31,
+	elcFallingTreeLevel2 = 32,
+	elcFallingTreeLevel3 = 33,
+	elcFallingTreeEnd	 = 34,
+
+	elcDeletedPoint		 = -1	// 已删除的点
+};
+#pragma pack()
+
+static eLASClassification GetLidarClassification(unsigned char clsType)
+{
+	return (eLASClassification)clsType;
+}
+
+#pragma pack(1)/*字节对齐*/
 struct LASIndex
 {
 	int rectangle_idx;
@@ -199,20 +197,25 @@ struct LASIndex
 #pragma pack()
 
 /*
-* ??????????????????????????
+* 点云文件块
+* version 1.2
+* author: Frank.Wu
+* 分块索引后添加KD树索引
 */
 class LASRectBlock {
 public:
-	LASRectBlock() { m_lasPoints = NULL; m_lasPoints_numbers = 0; }
+	LASRectBlock() { m_lasPoints.clear(); m_lasPoints_numbers = 0; m_block_tree = nullptr; }
 	~LASRectBlock() {
-		if (m_lasPoints != NULL)
-			delete[]m_lasPoints;
-		m_lasPoints = NULL;
+		if (!m_lasPoints.lasPoints.empty())
+			m_lasPoints.clear();
+		if (m_block_tree != nullptr)
+			delete m_block_tree;
+		m_block_tree = nullptr;
 		m_lasPoints_numbers = 0;
 	}
 
 	/*****************************************************************************
-	* @brief : ????????????????????,??????????????????????????????????????????????????????????????????????????????????????
+	* @brief : 分配内存,判断是否将点分配进入内存中，或者只存索引
 	* @author : W.W.Frank
 	* @date : 2015/11/29 20:02
 	* @version : version 1.0
@@ -221,15 +224,30 @@ public:
 	*****************************************************************************/
 	void LASRect_AllocateMemory(int lasPoints, bool inMemory, Rect2D rect);
 
+
+	/*****************************************************************************
+	* @brief : 对每个块建立kd树索引
+	* @author : W.W.Frank
+	* @date : 2018.07.24
+	* @version : version 1.1
+	* @inparam :
+	* @outparam :
+	*****************************************************************************/
+	void LASRectBuildTree();
+
+
 public:
-	Point3D     m_rectCenter;
-	Rect2D      m_Rectangle;
-	LASPoint*   m_lasPoints;
-	long long   m_lasPoints_numbers;
+	Point3D			 m_rectCenter;
+	Rect2D			 m_Rectangle;
+	long long		 m_lasPoints_numbers;
+
+	//construct the kd tree for each point
+	kd_tree_block*	 m_block_tree;
+	PCBlockAdaptor	 m_lasPoints;
 };
 
 /**
-* ??????????????????????????
+* 点云数据集
 */
 class ILASDataset {
 
@@ -237,22 +255,22 @@ public:
 	ILASDataset();
 	~ILASDataset();
 
-	//????????????R????????????????????
+	//构建R树的过程
 	long LASDataset_BuildTree();
-	//????????????????????????????????????????????????????????????????????????????????index
+	//分配内存，是否在内存中分配，或者只是读取index
 	void LASDataset_AllocateMemory(int lasRects);
-	//??????????????????????????????????????
+	//对数据进行整理
 	void LASDataset_Trim(bool inMemory);
 
-	//???????????????????????????????????????????
+	//遍历函数没想太清楚
 	//bool LASDataset_Iterator(callback_operation_points_Ptr ptrFun);
+	bool LASDataset_FixHeader();
 
-
-	//?????????????????????????????id??????????????????id????????????????????????????????????????
+	//找到匹配的矩形的id，根据id获取在哪个矩形中
 	bool LASDataset_Search(int rectID, Rect2D  searchRect, vector<int> &rects);
 	bool LASDataset_Search(int rectID, Point3D searchPnt, vector<int> &rects);
 
-	//???????????????????????????????????????????????
+	//根据顺次次序获取三维点
 	bool LASDataset_Search(int pointID, Point3D &searchPnt);
 
 public:
@@ -267,7 +285,46 @@ public:
 	LASBlockTree		m_lasBlockTree;
 	int					m_numRectangles;
 	int                 m_totalReadLasNumber;
-	LASIndex           *m_LASPointID; //?????????????????????????????????????????????
+	LASIndex           *m_LASPointID; //全局点在局部矩形中的编号
 };
+
+
+
+/*
+to meet the require of flann
+using adaptor mode
+*/
+template<typename PCDrived>
+struct PointCloudAdaptor
+{
+	//constructor
+	PointCloudAdaptor(const PCDrived &obj_) : obj(obj_) { }
+
+	const PCDrived &obj; //!using reference to save mem and spped up
+
+						 //get datasource using inline to speed up
+	inline const PCDrived& derived() const { return obj; }
+
+	// must return the number of data points
+	//(for adatopr the function must be relized)
+	inline size_t kdtree_get_point_count() const { return derived().size(); }
+
+	// Returns the dim'th component of the idx'th point in the class:
+	// Since this is inlined and the "dim" argument is typically an immediate value, the
+	//  "if/else's" are actually solved at compile time.
+	inline double kdtree_get_pt(const size_t idx, int dim) const
+	{
+		if (dim == 0) return derived()[idx].x;
+		else if (dim == 1) return derived()[idx].y;
+		else return derived()[idx].z;
+	}
+
+	// Optional bounding-box computation: return false to default to a standard bbox computation loop.
+	//   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
+	//   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
+	template <class BBOX>
+	bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+};
+
 
 #endif //LASLIB_LASPOINT_H
