@@ -1,14 +1,14 @@
+
 //
 // Created by wuwei on 18-1-14.
 //
-#include "../LidarApplication/LASSimpleClassify.h"
-#include "../LidarBase/tsmToUTM.h"
 #include "../LidarBase/LASReader.h"
-#include"../LidarAlgorithm/Geometry.h"
+#include "LASSimpleClassify.h"
+#include "../LidarBase/tsmToUTM.h"
 #include"../LidarAlgorithm/GeometryAlgorithm.h"
+#include <Eigen/Dense>
 
-
-
+using namespace Eigen;
 
 long LASSimpleClassify::LASVegetationByEcho(ILASDataset *dataset)
 {
@@ -83,7 +83,7 @@ long LASSimpleClassify::LASClassifyByColor(ILASDataset *dataset, std::vector<Col
 		for (int j = 0; j < block.m_lasPoints_numbers; ++j) {
 			LASPoint &point = block.m_lasPoints[j];
 			int minIdx = 0;
-			double minDis = _MAX_LIMIT_;
+			double minDis = 9999999;
 
 			for (int i = 0; i<colorInfo.size(); ++i)
 			{
@@ -134,9 +134,9 @@ long LASClassifyMemLimited::LASExportClassifiedPoints(const char* pathLas, eLASC
 		return -1;
 	}
 
-	double xmin = _MAX_LIMIT_, xmax = _MIN_LIMIT_;
-	double ymin = _MAX_LIMIT_, ymax = _MIN_LIMIT_;
-	double zmin = _MAX_LIMIT_, zmax = _MIN_LIMIT_;
+	double xmin = 99999999, xmax = -9999999;
+	double ymin = 99999999, ymax = -9999999;
+	double zmin = 99999999, zmax = -9999999;
 
 	//get type number¡¡and range first
 	int realReadPoints = 0;
@@ -191,4 +191,3 @@ long LASClassifyMemLimited::LASExportClassifiedPoints(const char* pathLas, eLASC
 	fclose(fLasOut); fLasOut = nullptr;
 	return 0;
 }
-//////////////////////////////////

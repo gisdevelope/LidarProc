@@ -190,6 +190,7 @@ public:
 };
 
 class LidarReaderTxt :public LidarMemReader {
+public:
 	/**
 	* careate LAS header
 	* @param lf
@@ -201,7 +202,7 @@ class LidarReaderTxt :public LidarMemReader {
 	/*
 		Read las from txt file
 	*/
-	long LidarReader_Read(bool inMemory, int skip, ILASDataset* dataset);
+	long LidarReader_Read(bool inMemory,eTxtLASType type, ILASDataset* dataset);
 
 };
 

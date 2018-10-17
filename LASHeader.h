@@ -19,6 +19,8 @@ using namespace std;
 #define _MIN_LIMIT_ -99999999
 #endif
 
+
+
 // LASͷ�ṹ
 #pragma pack(1)
 class  LASHeader

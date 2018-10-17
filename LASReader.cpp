@@ -45,7 +45,7 @@ long LidarMemReader::LidarReader_Read(bool inMemory, int skip, _OUT_ ILASDataset
 	if (!m_isDatasetOpen)
 	{
 		printf("do not open file\n");
-		exit(-1);
+		return -1;
 	}
 
 	LASHeader &refLasHeader = dataset->m_lasHeader;
@@ -71,8 +71,8 @@ long LidarMemReader::LidarReader_Read(bool inMemory, int skip, _OUT_ ILASDataset
 		//每个块的大小
 		double widthPer = width / sqrt_2 + 0.5;;
 		double heightPer = height / sqrt_2 + 0.5;;
-		int widthNum = ceil(width / widthPer);
-		int heightNum = ceil(height / heightPer);
+		int widthNum = ceil(width / widthPer)+1;
+		int heightNum = ceil(height / heightPer)+1;
 
 		//反正先统计信息
 		//分配内存
@@ -112,7 +112,7 @@ long LidarMemReader::LidarReader_Read(bool inMemory, int skip, _OUT_ ILASDataset
 		int totalRead = 0;
 		LidarReader_RectPoints(m_lasFile, dataset, widthPer, heightPer, widthNum, heightNum, inMemory, skip, totalRead, pointsRect);
 		*/
-		int totalRead = 0;
+		totalLasNumber = 0;
 		LidarReader_RectPoints(m_lasFile, dataset, widthPer, heightPer, widthNum, heightNum, inMemory, skip, totalLasNumber);
 	}
 	catch (bad_alloc &e)
@@ -136,7 +136,7 @@ long LidarMemReader::LidarReader_Write(const char *pathLidar, ILASDataset* datas
 	if (dataset->m_lasRectangles == nullptr)
 	{
 		printf("no las data\n");
-		exit(-1);
+		return -1;
 	}
 	//新建一个LASHeader
 	LASHeader &refHeader = dataset->m_lasHeader;
@@ -180,6 +180,7 @@ long LidarMemReader::LidarReader_Write(const char *pathLidar, ILASDataset* datas
 	//写数据
 	for (int k = 0; k<dataset->m_totalReadLasNumber; ++k)
 	{
+		//printf("\r%d", k);
 		int i = dataset->m_LASPointID[k].rectangle_idx;
 		int j = dataset->m_LASPointID[k].point_idx_inRect;
 
@@ -210,7 +211,7 @@ long LidarMemReader::LidarReader_Write(const char* pathLidar, ILASDataset* datas
 	if (dataset->m_lasRectangles == nullptr)
 	{
 		printf("no las data\n");
-		exit(-1);
+		return -1;
 	}
 	//新建一个LASHeader
 	LASHeader &refHeader = dataset->m_lasHeader;
@@ -289,7 +290,7 @@ long LidarMemReader::LidarReader_WriteWithColor(const char* pathLidar, ILASDatas
 	if (dataset->m_lasRectangles == nullptr)
 	{
 		printf("no las data\n");
-		exit(-1);
+		return -1;
 	}
 	//新建一个LASHeader
 	LASHeader &refHeader = dataset->m_lasHeader;
@@ -310,16 +311,12 @@ long LidarMemReader::LidarReader_WriteWithColor(const char* pathLidar, ILASDatas
 		}
 		totalPoints += dataset->m_lasRectangles[i].m_lasPoints_numbers;
 	}
-	FILE* fLasOut = fopen(pathLidar, "wb");
+	FILE* fLasOut = fopen(pathLidar, "wb+");
 	if (fLasOut == nullptr)
 		return -1;
-	bool isGpsTime = lasHeader.HasGPSTime(), isColorEx = lasHeader.HasLASColorExt6();
-	if (!isColorEx)
-	{
-		lasHeader.point_data_record_length += 6;
-		lasHeader.point_data_format = 3;
-		isColorEx = true;
-	}
+	lasHeader.number_of_point_records = totalPoints;
+	lasHeader.point_data_record_length = 34;
+	lasHeader.point_data_format = 3;
 	lasHeader.number_of_point_records = totalPoints;
 	lasHeader.version_major = 1;
 	lasHeader.version_minor = 2;
@@ -352,8 +349,7 @@ long LidarMemReader::LidarReader_WriteWithColor(const char* pathLidar, ILASDatas
 		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_scanAngle, sizeof(unsigned char), 1, fLasOut);
 		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_userdata, sizeof(unsigned char), 1, fLasOut);
 		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_flightID, sizeof(unsigned short), 1, fLasOut);
-		if (isGpsTime)
-			fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_gpsTime, sizeof(double), 1, fLasOut);
+		fwrite(&dataset->m_lasRectangles[i].m_lasPoints[j].m_gpsTime, sizeof(double), 1, fLasOut);
 		//if (isColorEx)
 		fwrite(&color, sizeof(LASColorExt), 1, fLasOut);
 	}
@@ -392,8 +388,8 @@ long LidarMemReader::LidarReader_ReadMerge(std::vector<string> lasFiles, _OUT_ I
 	//每个块的大小
 	double widthPer = width / sqrt_2 + 0.5;;
 	double heightPer = height / sqrt_2 + 0.5;;
-	int widthNum = ceil(width / widthPer);
-	int heightNum = ceil(height / heightPer);
+	int widthNum = ceil(width / widthPer)+1;
+	int heightNum = ceil(height / heightPer)+1;
 	dataset->LASDataset_AllocateMemory(widthNum*heightNum);
 	dataset->m_LASPointID = new LASIndex[totalRecordPointNumber];
 	//构建R树结构
@@ -436,7 +432,7 @@ long LidarMemReader::LidarReader_ReadMerge(std::vector<string> lasFiles, _OUT_ I
 	//	dataset->m_lasRectangles[j].LASRect_AllocateMemory(pointsRect[j], true, dataset->m_lasRectangles[j].m_Rectangle);
 	//memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
 	
-	dataset->m_LASPointID = new LASIndex[totalRecordPointNumber];
+	//dataset->m_LASPointID = new LASIndex[totalRecordPointNumber];
 	int totalRead = 0;
 
 	for (int i = 0; i < lasFiles.size(); ++i)
@@ -627,7 +623,7 @@ long LidarMemReader::LidarReader_RectPoints(FILE* fs, ILASDataset* dataset, doub
 
 	int *pointsRect = new int[widthNum*heightNum];
 	memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
-	totallasPnts = 0;
+	int readlasPnts = 0;
 	while (alread_read<refLasHeader.number_of_point_records)
 	{
 		if (read_once>read_once_max)
@@ -643,17 +639,21 @@ long LidarMemReader::LidarReader_RectPoints(FILE* fs, ILASDataset* dataset, doub
 
 			int widtnIdx = int((lasPnts.m_vec3d.x - refLasHeader.min_x) / widthPre);
 			int heighIdx = int((lasPnts.m_vec3d.y - refLasHeader.min_y) / heightPre);
+			if (widtnIdx > widthNum || widtnIdx<0 || heighIdx>heightNum || heighIdx < 0)
+				continue;
+
 			if (inMemory)
 				dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints.push_back(lasPnts);
 			dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints_numbers++;
-			dataset->m_LASPointID[totallasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
-			dataset->m_LASPointID[totallasPnts].rectangle_idx = heighIdx * widthNum + widtnIdx;
+			dataset->m_LASPointID[totallasPnts+ readlasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
+			dataset->m_LASPointID[totallasPnts+ readlasPnts].rectangle_idx = heighIdx * widthNum + widtnIdx;
 			pointsRect[heighIdx*widthNum + widtnIdx]++;
-			totallasPnts++;
+			readlasPnts++;
 		}
 		alread_read += read_once;
 		read_once_max = min(read_once_max, int(refLasHeader.number_of_point_records - alread_read));
 	}
+	totallasPnts += readlasPnts;
 	for (size_t i = 0; i < widthNum*heightNum; ++i)
 	{
 		if (dataset->m_lasRectangles[i].m_lasPoints_numbers > 0)
@@ -778,10 +778,11 @@ long LidarReaderTxt::LidarReader_Open(const char* pathLidar, ILASDataset* datase
 	dataset->m_lasHeader.file_signature[1] = 'A';
 	dataset->m_lasHeader.file_signature[2] = 'S';
 	dataset->m_lasHeader.file_signature[3] = 'F';
+
 	return 0;
 }
 
-long LidarReaderTxt::LidarReader_Read(bool inMemory, int skip, ILASDataset* dataset)
+long LidarReaderTxt::LidarReader_Read(bool inMemory, eTxtLASType type, ILASDataset* dataset)
 {
 	//header and build tree
 	char line[2048];
@@ -796,7 +797,11 @@ long LidarReaderTxt::LidarReader_Read(bool inMemory, int skip, ILASDataset* data
 		fgets(line, 2048, m_lasFile);
 		double x, y, z;
 		int    r, g, b;
-		sscanf(line, "%lf%lf%lf%d%d%d", &x, &y, &z, &r, &g, &b);
+		if(type==LASXYZ)
+			sscanf(line, "%lf%lf%lf", &x, &y, &z);
+		else if (type == LASXYZRGB)
+			sscanf(line, "%lf%lf%lf%d%d%d", &x, &y, &z, &r, &g, &b);
+
 		header.max_x = max(header.max_x, x);
 		header.max_y = max(header.max_y, y);
 		header.max_z = max(header.max_z, z);
@@ -833,31 +838,6 @@ long LidarReaderTxt::LidarReader_Read(bool inMemory, int skip, ILASDataset* data
 	//以前的时候为了省内存通过LASPoint* 进行存储，因此需要有两遍遍历，
 	//第一遍先获取到每个Rect内的点的数目，然后申请内存
 	//第二遍才能够获取每个点，现在采用vector动态分配内存，提高读取效率但是内存利用率下降了
-	//int *pointsRect = new int[widthNum*heightNum];
-	//memset(pointsRect, 0, sizeof(int)*widthNum*heightNum);
-
-	////second
-	//while (!feof(m_lasFile))
-	//{
-	//	fgets(line, 2048, m_lasFile);
-	//	double x, y, z;
-	//	int    r, g, b;
-	//	sscanf(line, "%lf%lf%lf%d%d%d", &x, &y, &z, &r, &g, &b);
-	//	dataset->m_xrange[0] = max(dataset->m_xrange[0],x); dataset->m_xrange[1] = min(dataset->m_xrange[1], x);
-	//	dataset->m_yrange[0] = max(dataset->m_yrange[0],y); dataset->m_yrange[1] = min(dataset->m_yrange[1], y);
-	//	dataset->m_zrange[0] = max(dataset->m_zrange[0],z); dataset->m_zrange[1] = min(dataset->m_zrange[1], z);
-
-	//	int widtnIdx = int((x - header.min_x) / widthPer);
-	//	int heighIdx = int((y - header.min_y) / heightPer);
-	//	if (widtnIdx < 0 || heighIdx < 0)
-	//		return -1;
-	//	//计算没一个Rect中有多少个点
-	//	pointsRect[heighIdx*widthNum + widtnIdx]++;
-	//};
-	//fseek(m_lasFile, 0, SEEK_SET);
-	//for (int j = 0; j < widthNum*heightNum; ++j)
-	//	dataset->m_lasRectangles[j].LASRect_AllocateMemory(pointsRect[j], inMemory, dataset->m_lasRectangles[j].m_Rectangle);
-	
 	dataset->m_LASPointID = new LASIndex[totalPointNumber];
 	dataset->m_totalReadLasNumber = totalPointNumber;
 	int totallasPnts = 0;
@@ -868,10 +848,14 @@ long LidarReaderTxt::LidarReader_Read(bool inMemory, int skip, ILASDataset* data
 		fgets(line, 2048, m_lasFile);
 		double x, y, z;
 		int    r, g, b;
-		sscanf(line, "%lf%lf%lf%d%d%d", &x, &y,&z, &r, &g, &b);
+		if (type == LASXYZ)
+			sscanf(line, "%lf%lf%lf", &x, &y, &z);
+		else if (type == LASXYZRGB)
+			sscanf(line, "%lf%lf%lf%d%d%d", &x, &y, &z, &r, &g, &b);
 		LASPoint lasPnts;
 		lasPnts.m_classify = 1;
-		lasPnts.m_colorExt.Red = r; lasPnts.m_colorExt.Green = g; lasPnts.m_colorExt.Blue = b;
+		if(type==LASXYZRGB)
+			lasPnts.m_colorExt.Red = r; lasPnts.m_colorExt.Green = g; lasPnts.m_colorExt.Blue = b;
 		lasPnts.m_vec3d.x = x; lasPnts.m_vec3d.y = y; lasPnts.m_vec3d.z = z;
 		lasPnts.m_flightID = lasPnts.m_intensity = 0;
 		lasPnts.m_rnseByte = 0;
@@ -885,11 +869,20 @@ long LidarReaderTxt::LidarReader_Read(bool inMemory, int skip, ILASDataset* data
 			return -1;
 		if (inMemory)
 			dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints.push_back(lasPnts);
+		dataset->m_lasRectangles[heighIdx*widthNum + widtnIdx].m_lasPoints_numbers++;
 		dataset->m_LASPointID[totallasPnts].rectangle_idx = heighIdx*widthNum + widtnIdx;
 		dataset->m_LASPointID[totallasPnts].point_idx_inRect = pointsRect[heighIdx*widthNum + widtnIdx];
 		pointsRect[heighIdx*widthNum + widtnIdx]++;
 		++totallasPnts;
 	};
+	for (size_t i = 0; i < widthNum*heightNum; ++i)
+	{
+		if (dataset->m_lasRectangles[i].m_lasPoints_numbers > 0)
+		{
+			dataset->m_lasRectangles[i].LASRectBuildTree();
+		}
+	}
 	delete[]pointsRect; pointsRect = nullptr;
+	fclose(m_lasFile); m_lasFile = nullptr;
 	return 0;
 }

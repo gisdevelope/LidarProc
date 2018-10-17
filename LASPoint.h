@@ -147,6 +147,13 @@ enum  eLASEcho
 	eLidarEchoMidian = 2,
 	eLidarEchoLast = 3
 };
+
+enum  eTxtLASType
+{
+	LASXYZ,
+	LASXYZRGB
+};
+
 /*点云的类别*/
 #pragma pack(1)
 enum  eLASClassification
@@ -171,7 +178,9 @@ enum  eLASClassification
 	elcDangerEnd		 = 23,
 
 	elcTowerRange	 	 = 24,		// 
-	elcDriveWay			 = 25,      //公路
+	elcTowerUp			 = 25,
+	elcTowerDown		 = 26,
+	elcDriveWay			 = 27,      //公路
 
 	elcFallingTree		 = 30,
 	elcFallingTreeLevel1 = 31,
@@ -188,6 +197,7 @@ static eLASClassification GetLidarClassification(unsigned char clsType)
 	return (eLASClassification)clsType;
 }
 
+
 #pragma pack(1)/*字节对齐*/
 struct LASIndex
 {
@@ -195,6 +205,8 @@ struct LASIndex
 	int point_idx_inRect;
 };
 #pragma pack()
+
+
 
 /*
 * 点云文件块
@@ -289,7 +301,6 @@ public:
 };
 
 
-
 /*
 to meet the require of flann
 using adaptor mode
@@ -317,6 +328,37 @@ struct PointCloudAdaptor
 		if (dim == 0) return derived()[idx].x;
 		else if (dim == 1) return derived()[idx].y;
 		else return derived()[idx].z;
+	}
+
+	// Optional bounding-box computation: return false to default to a standard bbox computation loop.
+	//   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
+	//   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
+	template <class BBOX>
+	bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+};
+
+template<typename PCDrived>
+struct PointCloud2DAdaptor
+{
+	//constructor
+	PointCloud2DAdaptor(const PCDrived &obj_) : obj(obj_) { }
+
+	const PCDrived &obj; //!using reference to save mem and spped up
+
+						 //get datasource using inline to speed up
+	inline const PCDrived& derived() const { return obj; }
+
+	// must return the number of data points
+	//(for adatopr the function must be relized)
+	inline size_t kdtree_get_point_count() const { return derived().size(); }
+
+	// Returns the dim'th component of the idx'th point in the class:
+	// Since this is inlined and the "dim" argument is typically an immediate value, the
+	//  "if/else's" are actually solved at compile time.
+	inline double kdtree_get_pt(const size_t idx, int dim) const
+	{
+		if (dim == 0) return derived()[idx].x;
+		else  return derived()[idx].y;
 	}
 
 	// Optional bounding-box computation: return false to default to a standard bbox computation loop.

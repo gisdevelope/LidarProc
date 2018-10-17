@@ -79,8 +79,9 @@ public:
 	* @return
 	*/
 	long LASExportClassifiedPoints(const char* pathLas, eLASClassification type, const char* pathExport);
-};
 
+
+};
 
 #endif //LASGUI_LASSIMPLECLASSIFY_H
 
